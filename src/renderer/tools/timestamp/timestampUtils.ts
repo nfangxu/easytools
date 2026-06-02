@@ -21,12 +21,16 @@ function formatLocalDate(date: Date): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+const DATE_TIME_PATTERN = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/;
+
 export function timestampToDate(input: string): TimestampToDateResult {
-  if (!/^\d{10}$/.test(input) && !/^\d{13}$/.test(input)) {
+  const normalizedInput = input.trim();
+
+  if (!/^\d{10}$/.test(normalizedInput) && !/^\d{13}$/.test(normalizedInput)) {
     return { ok: false, error: 'Timestamp must be exactly 10 seconds digits or 13 milliseconds digits' };
   }
 
-  const milliseconds = input.length === 10 ? Number(input) * 1000 : Number(input);
+  const milliseconds = normalizedInput.length === 10 ? Number(normalizedInput) * 1000 : Number(normalizedInput);
   const date = new Date(milliseconds);
 
   if (Number.isNaN(date.getTime())) {
@@ -37,10 +41,36 @@ export function timestampToDate(input: string): TimestampToDateResult {
 }
 
 export function dateToTimestamp(input: string): DateToTimestampResult {
-  const date = new Date(input);
+  const match = DATE_TIME_PATTERN.exec(input.trim());
+
+  if (!match) {
+    return { ok: false, error: 'Date must use YYYY-MM-DD HH:mm:ss format' };
+  }
+
+  const [, yearValue, monthValue, dayValue, hourValue, minuteValue, secondValue] = match;
+  const year = Number(yearValue);
+  const month = Number(monthValue);
+  const day = Number(dayValue);
+  const hour = Number(hourValue);
+  const minute = Number(minuteValue);
+  const second = Number(secondValue);
+
+  if (month < 1 || month > 12 || day < 1 || hour > 23 || minute > 59 || second > 59) {
+    return { ok: false, error: 'Invalid date' };
+  }
+
+  const date = new Date(year, month - 1, day, hour, minute, second);
   const milliseconds = date.getTime();
 
-  if (Number.isNaN(milliseconds)) {
+  if (
+    Number.isNaN(milliseconds) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day ||
+    date.getHours() !== hour ||
+    date.getMinutes() !== minute ||
+    date.getSeconds() !== second
+  ) {
     return { ok: false, error: 'Invalid date' };
   }
 

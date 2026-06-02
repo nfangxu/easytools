@@ -1,15 +1,16 @@
 export type ToolResult = { ok: true; value: string } | { ok: false; error: string };
 
 const BASE64_PATTERN = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+const BINARY_CHUNK_SIZE = 0x8000;
 
 function bytesToBinaryString(bytes: Uint8Array): string {
-  let binary = '';
+  const chunks: string[] = [];
 
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
+  for (let index = 0; index < bytes.length; index += BINARY_CHUNK_SIZE) {
+    chunks.push(String.fromCharCode(...bytes.subarray(index, index + BINARY_CHUNK_SIZE)));
   }
 
-  return binary;
+  return chunks.join('');
 }
 
 function binaryStringToBytes(binary: string): Uint8Array {
