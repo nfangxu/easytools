@@ -1,16 +1,32 @@
 export type ToolResult = { ok: true; value: string } | { ok: false; error: string };
 
-type BufferEncoding = 'base64' | 'utf8';
-
-declare const Buffer: {
-  from(input: string, encoding: BufferEncoding): { toString(encoding: BufferEncoding): string };
-};
-
 const BASE64_PATTERN = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+
+function bytesToBinaryString(bytes: Uint8Array): string {
+  let binary = '';
+
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+
+  return binary;
+}
+
+function binaryStringToBytes(binary: string): Uint8Array {
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return bytes;
+}
 
 export function encodeBase64(input: string): ToolResult {
   try {
-    return { ok: true, value: Buffer.from(input, 'utf8').toString('base64') };
+    const bytes = new TextEncoder().encode(input);
+
+    return { ok: true, value: btoa(bytesToBinaryString(bytes)) };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid input';
 
@@ -26,7 +42,10 @@ export function decodeBase64(input: string): ToolResult {
   }
 
   try {
-    return { ok: true, value: Buffer.from(normalizedInput, 'base64').toString('utf8') };
+    const bytes = binaryStringToBytes(atob(normalizedInput));
+    const value = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+
+    return { ok: true, value };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid input';
 
