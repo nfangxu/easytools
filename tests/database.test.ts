@@ -33,13 +33,16 @@ describe('database repository', () => {
       preview: 'RWFzeVRvb2xz',
     });
 
-    expect(db.listRecentRuns()).toEqual([
-      expect.objectContaining({
-        toolId: 'base64',
-        operation: 'encode',
-        summary: 'Encoded 12 characters',
-        preview: 'RWFzeVRvb2xz',
-      }),
-    ]);
+    const [recentRun] = db.listRecentRuns();
+
+    expect(recentRun).toMatchObject({
+      toolId: 'base64',
+      operation: 'encode',
+      summary: 'Encoded 12 characters',
+      preview: 'RWFzeVRvb2xz',
+    });
+    expect(recentRun.id).toEqual(expect.any(Number));
+    expect(recentRun.createdAt).toEqual(expect.any(String));
+    expect(recentRun.createdAt).not.toHaveLength(0);
   });
 });
