@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 
 import type { RecentRun } from '../../shared/types';
 import { tools, type ToolDefinition } from '../tools/registry';
@@ -34,6 +34,10 @@ function formatRecentTime(value: string): string {
   });
 }
 
+export function isLatestRecentRunsRequest(requestId: number, latestRequestId: number): boolean {
+  return requestId === latestRequestId;
+}
+
 interface RecentRunsRailProps {
   recentRuns: RecentRun[];
 }
@@ -67,13 +71,18 @@ function RecentRunsRail({ recentRuns }: RecentRunsRailProps): ReactElement {
 export function AppShell(): ReactElement {
   const [selectedToolId, setSelectedToolId] = useState<ToolDefinition['id']>('json');
   const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
+  const recentRunsRequestIdRef = useRef(0);
   const groupedTools = useMemo(() => groupToolsByCategory(tools), []);
   const selectedTool = tools.find((tool) => tool.id === selectedToolId) ?? tools[0];
   const SelectedToolComponent = selectedTool.component;
 
   const loadRecentRuns = useCallback(async () => {
+    const requestId = recentRunsRequestIdRef.current + 1;
+    recentRunsRequestIdRef.current = requestId;
     const runs = await window.easytools.listRecentRuns();
-    setRecentRuns(runs);
+    if (isLatestRecentRunsRequest(requestId, recentRunsRequestIdRef.current)) {
+      setRecentRuns(runs);
+    }
   }, []);
 
   useEffect(() => {
@@ -97,6 +106,7 @@ export function AppShell(): ReactElement {
                     key={tool.id}
                     type="button"
                     className={tool.id === selectedToolId ? 'nav-item active' : 'nav-item'}
+                    aria-pressed={tool.id === selectedToolId}
                     onClick={() => {
                       setSelectedToolId(tool.id);
                     }}

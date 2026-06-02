@@ -247,6 +247,15 @@ input {
   font-size: 13px;
 }
 
+.status-message {
+  border: 1px solid #d3dbe5;
+  border-radius: 6px;
+  background: #f7f9fb;
+  color: #526171;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
 .timestamp-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

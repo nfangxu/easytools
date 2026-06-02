@@ -2,6 +2,7 @@ import { useState, type ReactElement } from 'react';
 
 import { TextAreaPair } from '../../components/TextAreaPair';
 import { ToolChrome } from '../../components/ToolChrome';
+import { copyTextToClipboard, saveRecentRun } from '../toolActions';
 import { compactJson, formatJson } from './jsonUtils';
 
 interface JsonToolProps {
@@ -16,38 +17,43 @@ export function JsonTool({ onRecentRunAdded }: JsonToolProps): ReactElement {
   const [input, setInput] = useState(SAMPLE_JSON);
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
 
   async function run(operation: JsonOperation): Promise<void> {
     const result = operation === 'format' ? formatJson(input) : compactJson(input);
 
     if (!result.ok) {
       setError(result.error);
+      setStatus('');
       return;
     }
 
     setOutput(result.value);
     setError('');
-    await window.easytools.addRecentRun({
-      toolId: 'json',
-      operation,
-      summary: operation === 'format' ? 'JSON 格式化' : 'JSON 压缩',
-      preview: result.value.slice(0, 120),
-    });
-    onRecentRunAdded();
+    const recentRunStatus = await saveRecentRun(
+      {
+        toolId: 'json',
+        operation,
+        summary: operation === 'format' ? 'JSON 格式化' : 'JSON 压缩',
+        preview: result.value.slice(0, 120),
+      },
+      window.easytools.addRecentRun,
+    );
+    setStatus(recentRunStatus);
+    if (!recentRunStatus) {
+      onRecentRunAdded();
+    }
   }
 
   function clear(): void {
     setInput('');
     setOutput('');
     setError('');
+    setStatus('');
   }
 
   async function copyOutput(): Promise<void> {
-    if (!output) {
-      return;
-    }
-
-    await navigator.clipboard.writeText(output);
+    setStatus(await copyTextToClipboard(output, navigator.clipboard.writeText.bind(navigator.clipboard)));
   }
 
   return (
@@ -67,6 +73,7 @@ export function JsonTool({ onRecentRunAdded }: JsonToolProps): ReactElement {
         </button>
       </div>
       {error ? <div className="error-banner">{error}</div> : null}
+      {status ? <div className="status-message">{status}</div> : null}
       <TextAreaPair
         inputLabel="输入"
         outputLabel="输出"

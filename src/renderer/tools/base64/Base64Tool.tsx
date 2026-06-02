@@ -2,6 +2,7 @@ import { useState, type ReactElement } from 'react';
 
 import { TextAreaPair } from '../../components/TextAreaPair';
 import { ToolChrome } from '../../components/ToolChrome';
+import { copyTextToClipboard, saveRecentRun } from '../toolActions';
 import { decodeBase64, encodeBase64 } from './base64Utils';
 
 interface Base64ToolProps {
@@ -14,38 +15,43 @@ export function Base64Tool({ onRecentRunAdded }: Base64ToolProps): ReactElement 
   const [input, setInput] = useState('EasyTools 中文');
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
 
   async function run(operation: Base64Operation): Promise<void> {
     const result = operation === 'encode' ? encodeBase64(input) : decodeBase64(input);
 
     if (!result.ok) {
       setError(result.error);
+      setStatus('');
       return;
     }
 
     setOutput(result.value);
     setError('');
-    await window.easytools.addRecentRun({
-      toolId: 'base64',
-      operation,
-      summary: operation === 'encode' ? 'Base64 编码' : 'Base64 解码',
-      preview: result.value.slice(0, 120),
-    });
-    onRecentRunAdded();
+    const recentRunStatus = await saveRecentRun(
+      {
+        toolId: 'base64',
+        operation,
+        summary: operation === 'encode' ? 'Base64 编码' : 'Base64 解码',
+        preview: result.value.slice(0, 120),
+      },
+      window.easytools.addRecentRun,
+    );
+    setStatus(recentRunStatus);
+    if (!recentRunStatus) {
+      onRecentRunAdded();
+    }
   }
 
   function swap(): void {
     setInput(output);
     setOutput(input);
     setError('');
+    setStatus('');
   }
 
   async function copyOutput(): Promise<void> {
-    if (!output) {
-      return;
-    }
-
-    await navigator.clipboard.writeText(output);
+    setStatus(await copyTextToClipboard(output, navigator.clipboard.writeText.bind(navigator.clipboard)));
   }
 
   return (
@@ -65,6 +71,7 @@ export function Base64Tool({ onRecentRunAdded }: Base64ToolProps): ReactElement 
         </button>
       </div>
       {error ? <div className="error-banner">{error}</div> : null}
+      {status ? <div className="status-message">{status}</div> : null}
       <TextAreaPair
         inputLabel="输入"
         outputLabel="输出"

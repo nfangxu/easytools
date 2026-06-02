@@ -1,0 +1,35 @@
+import type { RecentRun, RecentRunInput } from '../../shared/types';
+
+export const TOOL_STATUS = {
+  copied: '已复制',
+  copyFailed: '复制失败',
+  recentRunSaveFailed: '最近记录保存失败',
+} as const;
+
+export async function copyTextToClipboard(
+  text: string,
+  writeText: (value: string) => Promise<void>,
+): Promise<string> {
+  if (!text) {
+    return '';
+  }
+
+  try {
+    await writeText(text);
+    return TOOL_STATUS.copied;
+  } catch {
+    return TOOL_STATUS.copyFailed;
+  }
+}
+
+export async function saveRecentRun(
+  input: RecentRunInput,
+  addRecentRun: (value: RecentRunInput) => Promise<RecentRun>,
+): Promise<string> {
+  try {
+    await addRecentRun(input);
+    return '';
+  } catch {
+    return TOOL_STATUS.recentRunSaveFailed;
+  }
+}

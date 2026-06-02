@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from 'react';
 
 import { ToolChrome } from '../../components/ToolChrome';
+import { copyTextToClipboard, saveRecentRun } from '../toolActions';
 import { dateToTimestamp, timestampToDate, type DateToTimestampResult, type TimestampToDateResult } from './timestampUtils';
 
 interface TimestampToolProps {
@@ -29,12 +30,14 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
   const [dateInput, setDateInput] = useState('2024-01-01 00:00:00');
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
 
   async function runTimestampToDate(): Promise<void> {
     const conversion = timestampToDate(timestampInput);
 
     if (!conversion.ok) {
       setError(conversion.error);
+      setStatus('');
       return;
     }
 
@@ -42,13 +45,19 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
     setDateInput(nextState.dateText);
     setResult(nextState.result);
     setError('');
-    await window.easytools.addRecentRun({
-      toolId: 'timestamp',
-      operation: 'timestamp-to-date',
-      summary: '时间戳转日期',
-      preview: nextState.result.slice(0, 120),
-    });
-    onRecentRunAdded();
+    const recentRunStatus = await saveRecentRun(
+      {
+        toolId: 'timestamp',
+        operation: 'timestamp-to-date',
+        summary: '时间戳转日期',
+        preview: nextState.result.slice(0, 120),
+      },
+      window.easytools.addRecentRun,
+    );
+    setStatus(recentRunStatus);
+    if (!recentRunStatus) {
+      onRecentRunAdded();
+    }
   }
 
   async function runDateToTimestamp(): Promise<void> {
@@ -56,6 +65,7 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
 
     if (!conversion.ok) {
       setError(conversion.error);
+      setStatus('');
       return;
     }
 
@@ -63,21 +73,23 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
     setTimestampInput(nextState.timestamp);
     setResult(nextState.result);
     setError('');
-    await window.easytools.addRecentRun({
-      toolId: 'timestamp',
-      operation: 'date-to-timestamp',
-      summary: '日期转时间戳',
-      preview: nextState.result.slice(0, 120),
-    });
-    onRecentRunAdded();
+    const recentRunStatus = await saveRecentRun(
+      {
+        toolId: 'timestamp',
+        operation: 'date-to-timestamp',
+        summary: '日期转时间戳',
+        preview: nextState.result.slice(0, 120),
+      },
+      window.easytools.addRecentRun,
+    );
+    setStatus(recentRunStatus);
+    if (!recentRunStatus) {
+      onRecentRunAdded();
+    }
   }
 
   async function copyResult(): Promise<void> {
-    if (!result) {
-      return;
-    }
-
-    await navigator.clipboard.writeText(result);
+    setStatus(await copyTextToClipboard(result, navigator.clipboard.writeText.bind(navigator.clipboard)));
   }
 
   return (
@@ -116,6 +128,7 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
         </button>
       </div>
       {error ? <div className="error-banner">{error}</div> : null}
+      {status ? <div className="status-message">{status}</div> : null}
       <label className="field-block">
         <span>结果</span>
         <textarea
