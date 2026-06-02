@@ -1,7 +1,7 @@
-import { useState, type ReactElement } from 'react';
+import { useRef, useState, type ReactElement } from 'react';
 
 import { ToolChrome } from '../../components/ToolChrome';
-import { copyTextToClipboard, saveRecentRun } from '../toolActions';
+import { copyTextToClipboard, isLatestStatusRequest, saveRecentRun } from '../toolActions';
 import { dateToTimestamp, timestampToDate, type DateToTimestampResult, type TimestampToDateResult } from './timestampUtils';
 
 interface TimestampToolProps {
@@ -31,16 +31,32 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
+  const statusRequestIdRef = useRef(0);
+
+  function nextStatusRequestId(): number {
+    const requestId = statusRequestIdRef.current + 1;
+    statusRequestIdRef.current = requestId;
+
+    return requestId;
+  }
+
+  function setLatestStatus(requestId: number, nextStatus: string): void {
+    if (isLatestStatusRequest(requestId, statusRequestIdRef.current)) {
+      setStatus(nextStatus);
+    }
+  }
 
   async function runTimestampToDate(): Promise<void> {
     const conversion = timestampToDate(timestampInput);
 
     if (!conversion.ok) {
       setError(conversion.error);
+      nextStatusRequestId();
       setStatus('');
       return;
     }
 
+    const statusRequestId = nextStatusRequestId();
     const nextState = buildTimestampToDateState(conversion);
     setDateInput(nextState.dateText);
     setResult(nextState.result);
@@ -54,7 +70,7 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
       },
       window.easytools.addRecentRun,
     );
-    setStatus(recentRunStatus);
+    setLatestStatus(statusRequestId, recentRunStatus);
     if (!recentRunStatus) {
       onRecentRunAdded();
     }
@@ -65,10 +81,12 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
 
     if (!conversion.ok) {
       setError(conversion.error);
+      nextStatusRequestId();
       setStatus('');
       return;
     }
 
+    const statusRequestId = nextStatusRequestId();
     const nextState = buildDateToTimestampState(conversion);
     setTimestampInput(nextState.timestamp);
     setResult(nextState.result);
@@ -82,14 +100,16 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
       },
       window.easytools.addRecentRun,
     );
-    setStatus(recentRunStatus);
+    setLatestStatus(statusRequestId, recentRunStatus);
     if (!recentRunStatus) {
       onRecentRunAdded();
     }
   }
 
   async function copyResult(): Promise<void> {
-    setStatus(await copyTextToClipboard(result, navigator.clipboard.writeText.bind(navigator.clipboard)));
+    const statusRequestId = nextStatusRequestId();
+    const copyStatus = await copyTextToClipboard(result, navigator.clipboard.writeText.bind(navigator.clipboard));
+    setLatestStatus(statusRequestId, copyStatus);
   }
 
   return (
@@ -127,8 +147,12 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
           复制结果
         </button>
       </div>
-      {error ? <div className="error-banner">{error}</div> : null}
-      {status ? <div className="status-message">{status}</div> : null}
+      {error ? <div className="error-banner" role="alert">{error}</div> : null}
+      {status ? (
+        <div className="status-message" role="status" aria-live="polite">
+          {status}
+        </div>
+      ) : null}
       <label className="field-block">
         <span>结果</span>
         <textarea

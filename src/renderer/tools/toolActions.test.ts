@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { copyTextToClipboard, saveRecentRun } from './toolActions';
+import { copyTextToClipboard, isLatestStatusRequest, saveRecentRun } from './toolActions';
 
 describe('tool actions', () => {
   it('returns a clipboard failure status when clipboard write rejects', async () => {
@@ -31,5 +31,10 @@ describe('tool actions', () => {
     );
 
     expect(status).toBe('最近记录保存失败');
+  });
+
+  it('identifies stale async status requests', () => {
+    expect(isLatestStatusRequest(1, 2)).toBe(false);
+    expect(isLatestStatusRequest(2, 2)).toBe(true);
   });
 });

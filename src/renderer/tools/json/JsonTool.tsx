@@ -1,8 +1,8 @@
-import { useState, type ReactElement } from 'react';
+import { useRef, useState, type ReactElement } from 'react';
 
 import { TextAreaPair } from '../../components/TextAreaPair';
 import { ToolChrome } from '../../components/ToolChrome';
-import { copyTextToClipboard, saveRecentRun } from '../toolActions';
+import { copyTextToClipboard, isLatestStatusRequest, saveRecentRun } from '../toolActions';
 import { compactJson, formatJson } from './jsonUtils';
 
 interface JsonToolProps {
@@ -18,16 +18,32 @@ export function JsonTool({ onRecentRunAdded }: JsonToolProps): ReactElement {
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
+  const statusRequestIdRef = useRef(0);
+
+  function nextStatusRequestId(): number {
+    const requestId = statusRequestIdRef.current + 1;
+    statusRequestIdRef.current = requestId;
+
+    return requestId;
+  }
+
+  function setLatestStatus(requestId: number, nextStatus: string): void {
+    if (isLatestStatusRequest(requestId, statusRequestIdRef.current)) {
+      setStatus(nextStatus);
+    }
+  }
 
   async function run(operation: JsonOperation): Promise<void> {
     const result = operation === 'format' ? formatJson(input) : compactJson(input);
 
     if (!result.ok) {
       setError(result.error);
+      nextStatusRequestId();
       setStatus('');
       return;
     }
 
+    const statusRequestId = nextStatusRequestId();
     setOutput(result.value);
     setError('');
     const recentRunStatus = await saveRecentRun(
@@ -39,7 +55,7 @@ export function JsonTool({ onRecentRunAdded }: JsonToolProps): ReactElement {
       },
       window.easytools.addRecentRun,
     );
-    setStatus(recentRunStatus);
+    setLatestStatus(statusRequestId, recentRunStatus);
     if (!recentRunStatus) {
       onRecentRunAdded();
     }
@@ -49,11 +65,14 @@ export function JsonTool({ onRecentRunAdded }: JsonToolProps): ReactElement {
     setInput('');
     setOutput('');
     setError('');
+    nextStatusRequestId();
     setStatus('');
   }
 
   async function copyOutput(): Promise<void> {
-    setStatus(await copyTextToClipboard(output, navigator.clipboard.writeText.bind(navigator.clipboard)));
+    const statusRequestId = nextStatusRequestId();
+    const copyStatus = await copyTextToClipboard(output, navigator.clipboard.writeText.bind(navigator.clipboard));
+    setLatestStatus(statusRequestId, copyStatus);
   }
 
   return (
@@ -72,8 +91,12 @@ export function JsonTool({ onRecentRunAdded }: JsonToolProps): ReactElement {
           复制输出
         </button>
       </div>
-      {error ? <div className="error-banner">{error}</div> : null}
-      {status ? <div className="status-message">{status}</div> : null}
+      {error ? <div className="error-banner" role="alert">{error}</div> : null}
+      {status ? (
+        <div className="status-message" role="status" aria-live="polite">
+          {status}
+        </div>
+      ) : null}
       <TextAreaPair
         inputLabel="输入"
         outputLabel="输出"

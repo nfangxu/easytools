@@ -6,6 +6,10 @@ export const TOOL_STATUS = {
   recentRunSaveFailed: '最近记录保存失败',
 } as const;
 
+export function isLatestStatusRequest(requestId: number, latestRequestId: number): boolean {
+  return requestId === latestRequestId;
+}
+
 export async function copyTextToClipboard(
   text: string,
   writeText: (value: string) => Promise<void>,

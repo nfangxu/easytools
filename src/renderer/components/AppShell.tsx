@@ -40,14 +40,50 @@ export function isLatestRecentRunsRequest(requestId: number, latestRequestId: nu
 
 interface RecentRunsRailProps {
   recentRuns: RecentRun[];
+  status: string;
 }
 
-function RecentRunsRail({ recentRuns }: RecentRunsRailProps): ReactElement {
+type RecentRunsLoadResult = { ok: true } | { ok: false };
+type RecentRunsReadResult = { ok: true; runs: RecentRun[] } | { ok: false };
+
+const RECENT_RUNS_LOAD_FAILED_STATUS = '最近记录加载失败';
+
+export async function readRecentRuns(listRecentRuns: () => Promise<RecentRun[]>): Promise<RecentRunsReadResult> {
+  try {
+    return { ok: true, runs: await listRecentRuns() };
+  } catch {
+    return { ok: false };
+  }
+}
+
+export function getRecentRunsLoadState(
+  requestId: number,
+  latestRequestId: number,
+  result: RecentRunsLoadResult,
+): { shouldApply: boolean; status: string } {
+  const shouldApply = isLatestRecentRunsRequest(requestId, latestRequestId);
+
+  if (!shouldApply) {
+    return { shouldApply, status: '' };
+  }
+
+  return {
+    shouldApply,
+    status: result.ok ? '' : RECENT_RUNS_LOAD_FAILED_STATUS,
+  };
+}
+
+function RecentRunsRail({ recentRuns, status }: RecentRunsRailProps): ReactElement {
   return (
     <aside className="recent-rail">
       <div className="rail-header">
         <h2>最近运行</h2>
       </div>
+      {status ? (
+        <div className="rail-status" role="status" aria-live="polite">
+          {status}
+        </div>
+      ) : null}
       {recentRuns.length === 0 ? (
         <p className="empty-state">暂无记录</p>
       ) : (
@@ -71,6 +107,7 @@ function RecentRunsRail({ recentRuns }: RecentRunsRailProps): ReactElement {
 export function AppShell(): ReactElement {
   const [selectedToolId, setSelectedToolId] = useState<ToolDefinition['id']>('json');
   const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
+  const [recentRunsStatus, setRecentRunsStatus] = useState('');
   const recentRunsRequestIdRef = useRef(0);
   const groupedTools = useMemo(() => groupToolsByCategory(tools), []);
   const selectedTool = tools.find((tool) => tool.id === selectedToolId) ?? tools[0];
@@ -79,10 +116,17 @@ export function AppShell(): ReactElement {
   const loadRecentRuns = useCallback(async () => {
     const requestId = recentRunsRequestIdRef.current + 1;
     recentRunsRequestIdRef.current = requestId;
-    const runs = await window.easytools.listRecentRuns();
-    if (isLatestRecentRunsRequest(requestId, recentRunsRequestIdRef.current)) {
-      setRecentRuns(runs);
+    const result = await readRecentRuns(window.easytools.listRecentRuns);
+    const loadState = getRecentRunsLoadState(requestId, recentRunsRequestIdRef.current, result);
+
+    if (!loadState.shouldApply) {
+      return;
     }
+
+    if (result.ok) {
+      setRecentRuns(result.runs);
+    }
+    setRecentRunsStatus(loadState.status);
   }, []);
 
   useEffect(() => {
@@ -122,7 +166,7 @@ export function AppShell(): ReactElement {
       <section className="workspace" aria-label={selectedTool.name}>
         <SelectedToolComponent onRecentRunAdded={() => void loadRecentRuns()} />
       </section>
-      <RecentRunsRail recentRuns={recentRuns} />
+      <RecentRunsRail recentRuns={recentRuns} status={recentRunsStatus} />
     </main>
   );
 }
