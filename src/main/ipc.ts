@@ -7,6 +7,8 @@ const MAX_SHORT_TEXT_LENGTH = 80;
 const MAX_SUMMARY_LENGTH = 240;
 const MAX_PREVIEW_LENGTH = 500;
 const MAX_SETTING_JSON_LENGTH = 8 * 1024;
+const MAX_SETTING_DEPTH = 20;
+const MAX_SETTING_NODES = 1000;
 
 export function registerIpc(database: ReturnType<typeof createDatabase>): void {
   ipcMain.handle('settings:get', (_event, namespace: string) =>
@@ -35,7 +37,7 @@ export function validateNamespace(namespace: unknown): string {
 }
 
 export function validateSettingValue(value: unknown): SettingValue {
-  if (!isSerializableSettingValue(value, new Set())) {
+  if (!isSerializableSettingValue(value, new Set(), 0, { count: 0 })) {
     throw new Error(
       'Setting value must be JSON-serializable within SettingValue scope.',
     );
@@ -101,7 +103,23 @@ function validateTextField(
 function isSerializableSettingValue(
   value: unknown,
   seen: Set<object>,
+  depth: number,
+  nodeBudget: { count: number },
 ): value is SettingValue {
+  if (depth > MAX_SETTING_DEPTH) {
+    throw new Error(
+      `Setting value exceeds maximum depth of ${MAX_SETTING_DEPTH}.`,
+    );
+  }
+
+  nodeBudget.count += 1;
+
+  if (nodeBudget.count > MAX_SETTING_NODES) {
+    throw new Error(
+      `Setting value must contain ${MAX_SETTING_NODES} nodes or fewer.`,
+    );
+  }
+
   if (value === null) return true;
 
   switch (typeof value) {
@@ -112,10 +130,10 @@ function isSerializableSettingValue(
       return Number.isFinite(value);
     case 'object':
       if (Array.isArray(value)) {
-        return isSerializableArray(value, seen);
+        return isSerializableArray(value, seen, depth, nodeBudget);
       }
 
-      return isSerializableRecord(value, seen);
+      return isSerializableRecord(value, seen, depth, nodeBudget);
     default:
       return false;
   }
@@ -124,13 +142,15 @@ function isSerializableSettingValue(
 function isSerializableArray(
   value: unknown[],
   seen: Set<object>,
+  depth: number,
+  nodeBudget: { count: number },
 ): value is SettingValue[] {
   if (seen.has(value)) return false;
 
   seen.add(value);
 
   for (const nestedValue of value) {
-    if (!isSerializableSettingValue(nestedValue, seen)) {
+    if (!isSerializableSettingValue(nestedValue, seen, depth + 1, nodeBudget)) {
       seen.delete(value);
       return false;
     }
@@ -143,6 +163,8 @@ function isSerializableArray(
 function isSerializableRecord(
   value: object,
   seen: Set<object>,
+  depth: number,
+  nodeBudget: { count: number },
 ): value is { [key: string]: SettingValue } {
   if (Object.getPrototypeOf(value) !== Object.prototype) return false;
   if (seen.has(value)) return false;
@@ -150,7 +172,7 @@ function isSerializableRecord(
   seen.add(value);
 
   for (const nestedValue of Object.values(value)) {
-    if (!isSerializableSettingValue(nestedValue, seen)) {
+    if (!isSerializableSettingValue(nestedValue, seen, depth + 1, nodeBudget)) {
       seen.delete(value);
       return false;
     }

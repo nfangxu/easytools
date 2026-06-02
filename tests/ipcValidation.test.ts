@@ -83,6 +83,21 @@ describe('ipc validation', () => {
     expect(() => validateSettingValue('a'.repeat(8 * 1024))).toThrow('8 KB');
   });
 
+  it('rejects overly deep nested setting values with a validation error', () => {
+    let value: unknown = null;
+
+    for (let index = 0; index < 21; index += 1) {
+      value = [value];
+    }
+
+    expect(() => validateSettingValue(value)).toThrow('depth');
+  });
+
+  it('rejects setting values with too many nodes', () => {
+    expect(() => validateSettingValue(Array.from({ length: 1001 }, () => null)))
+      .toThrow('1000');
+  });
+
   it('rejects invalid recent run payloads', () => {
     expect(() =>
       validateRecentRunInput({
