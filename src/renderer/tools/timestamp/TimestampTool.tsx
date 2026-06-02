@@ -1,10 +1,27 @@
 import { useState, type ReactElement } from 'react';
 
 import { ToolChrome } from '../../components/ToolChrome';
-import { dateToTimestamp, timestampToDate } from './timestampUtils';
+import { dateToTimestamp, timestampToDate, type DateToTimestampResult, type TimestampToDateResult } from './timestampUtils';
 
 interface TimestampToolProps {
   onRecentRunAdded: () => void;
+}
+
+type SuccessfulTimestampToDate = Extract<TimestampToDateResult, { ok: true }>;
+type SuccessfulDateToTimestamp = Extract<DateToTimestampResult, { ok: true }>;
+
+export function buildTimestampToDateState(converted: SuccessfulTimestampToDate): { dateText: string; result: string } {
+  return {
+    dateText: converted.value,
+    result: `${converted.value}\n${converted.milliseconds} ms`,
+  };
+}
+
+export function buildDateToTimestampState(converted: SuccessfulDateToTimestamp): { timestamp: string; result: string } {
+  return {
+    timestamp: String(converted.seconds),
+    result: `${converted.seconds} s\n${converted.milliseconds} ms`,
+  };
 }
 
 export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactElement {
@@ -21,13 +38,15 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
       return;
     }
 
-    setResult(conversion.value);
+    const nextState = buildTimestampToDateState(conversion);
+    setDateInput(nextState.dateText);
+    setResult(nextState.result);
     setError('');
     await window.easytools.addRecentRun({
       toolId: 'timestamp',
       operation: 'timestamp-to-date',
       summary: '时间戳转日期',
-      preview: conversion.value.slice(0, 120),
+      preview: nextState.result.slice(0, 120),
     });
     onRecentRunAdded();
   }
@@ -40,14 +59,15 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
       return;
     }
 
-    const value = `${conversion.seconds}\n${conversion.milliseconds}`;
-    setResult(value);
+    const nextState = buildDateToTimestampState(conversion);
+    setTimestampInput(nextState.timestamp);
+    setResult(nextState.result);
     setError('');
     await window.easytools.addRecentRun({
       toolId: 'timestamp',
       operation: 'date-to-timestamp',
       summary: '日期转时间戳',
-      preview: value.slice(0, 120),
+      preview: nextState.result.slice(0, 120),
     });
     onRecentRunAdded();
   }
