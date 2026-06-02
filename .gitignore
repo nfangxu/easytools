@@ -2,6 +2,7 @@ node_modules/
 dist/
 out/
 *.log
+logs
 .DS_Store
 .superpowers/
 coverage/
