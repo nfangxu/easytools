@@ -1,6 +1,9 @@
 import { app, BrowserWindow } from 'electron';
 import { join } from 'node:path';
 
+import { createDatabase } from './database';
+import { registerIpc } from './ipc';
+
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 1180,
@@ -22,7 +25,11 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  const database = createDatabase(join(app.getPath('userData'), 'easytools.db'));
+  registerIpc(database);
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

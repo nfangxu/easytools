@@ -1,5 +1,24 @@
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
 
-contextBridge.exposeInMainWorld('easytools', {
-  appVersion: '0.1.0',
-});
+import type {
+  EasyToolsApi,
+  RecentRunInput,
+  SettingValue,
+} from '../shared/types';
+
+const easytools: EasyToolsApi = {
+  getSetting(namespace: string) {
+    return ipcRenderer.invoke('settings:get', namespace);
+  },
+  setSetting(namespace: string, value: SettingValue) {
+    return ipcRenderer.invoke('settings:set', namespace, value);
+  },
+  listRecentRuns() {
+    return ipcRenderer.invoke('recent-runs:list');
+  },
+  addRecentRun(input: RecentRunInput) {
+    return ipcRenderer.invoke('recent-runs:add', input);
+  },
+};
+
+contextBridge.exposeInMainWorld('easytools', easytools);
