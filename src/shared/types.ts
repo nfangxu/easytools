@@ -1,9 +1,10 @@
 export type SettingValue =
-  | Record<string, unknown>
   | string
   | number
   | boolean
-  | null;
+  | null
+  | SettingValue[]
+  | { [key: string]: SettingValue };
 
 export interface RecentRunInput {
   toolId: string;

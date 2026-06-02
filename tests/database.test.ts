@@ -35,6 +35,13 @@ describe('database repository', () => {
     expect(db.getSetting('json')).toEqual({ indent: 4 });
   });
 
+  it('can close repeatedly without throwing', () => {
+    expect(() => {
+      db.close();
+      db.close();
+    }).not.toThrow();
+  });
+
   it('lists recent runs without raw input', () => {
     db.addRecentRun({
       toolId: 'base64',

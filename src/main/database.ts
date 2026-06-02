@@ -17,6 +17,7 @@ interface RecentRunRow {
 
 export function createDatabase(path: string) {
   const sqlite = new Database(path);
+  let closed = false;
 
   sqlite.pragma('journal_mode = WAL');
   sqlite.exec(`
@@ -93,7 +94,10 @@ export function createDatabase(path: string) {
     },
 
     close(): void {
+      if (closed) return;
+
       sqlite.close();
+      closed = true;
     },
   };
 }

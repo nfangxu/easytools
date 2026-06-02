@@ -6,6 +6,7 @@ import type { createDatabase } from './database';
 const MAX_SHORT_TEXT_LENGTH = 80;
 const MAX_SUMMARY_LENGTH = 240;
 const MAX_PREVIEW_LENGTH = 500;
+const MAX_SETTING_JSON_LENGTH = 8 * 1024;
 
 export function registerIpc(database: ReturnType<typeof createDatabase>): void {
   ipcMain.handle('settings:get', (_event, namespace: string) =>
@@ -38,6 +39,12 @@ export function validateSettingValue(value: unknown): SettingValue {
     throw new Error(
       'Setting value must be JSON-serializable within SettingValue scope.',
     );
+  }
+
+  const serialized = JSON.stringify(value);
+
+  if (serialized.length > MAX_SETTING_JSON_LENGTH) {
+    throw new Error('Setting value must serialize to 8 KB or less.');
   }
 
   return value;
@@ -104,17 +111,39 @@ function isSerializableSettingValue(
     case 'number':
       return Number.isFinite(value);
     case 'object':
+      if (Array.isArray(value)) {
+        return isSerializableArray(value, seen);
+      }
+
       return isSerializableRecord(value, seen);
     default:
       return false;
   }
 }
 
+function isSerializableArray(
+  value: unknown[],
+  seen: Set<object>,
+): value is SettingValue[] {
+  if (seen.has(value)) return false;
+
+  seen.add(value);
+
+  for (const nestedValue of value) {
+    if (!isSerializableSettingValue(nestedValue, seen)) {
+      seen.delete(value);
+      return false;
+    }
+  }
+
+  seen.delete(value);
+  return true;
+}
+
 function isSerializableRecord(
   value: object,
   seen: Set<object>,
-): value is Record<string, unknown> {
-  if (Array.isArray(value)) return false;
+): value is { [key: string]: SettingValue } {
   if (Object.getPrototypeOf(value) !== Object.prototype) return false;
   if (seen.has(value)) return false;
 
@@ -122,6 +151,7 @@ function isSerializableRecord(
 
   for (const nestedValue of Object.values(value)) {
     if (!isSerializableSettingValue(nestedValue, seen)) {
+      seen.delete(value);
       return false;
     }
   }

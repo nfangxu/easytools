@@ -9,7 +9,17 @@ import {
 describe('ipc validation', () => {
   it('accepts valid IPC payloads', () => {
     expect(validateNamespace('json')).toBe('json');
-    expect(validateSettingValue({ indent: 2 })).toEqual({ indent: 2 });
+    expect(
+      validateSettingValue({
+        indent: 2,
+        enabled: true,
+        modes: ['compact', { label: 'expanded', levels: [1, 2, null] }],
+      }),
+    ).toEqual({
+      indent: 2,
+      enabled: true,
+      modes: ['compact', { label: 'expanded', levels: [1, 2, null] }],
+    });
     expect(
       validateRecentRunInput({
         toolId: 'base64',
@@ -50,12 +60,27 @@ describe('ipc validation', () => {
 
   it('rejects invalid setting values', () => {
     expect(() => validateSettingValue(undefined)).toThrow('JSON-serializable');
-    expect(() => validateSettingValue(['json'])).toThrow('JSON-serializable');
+    expect(() => validateSettingValue(Number.POSITIVE_INFINITY)).toThrow(
+      'JSON-serializable',
+    );
+    expect(() => validateSettingValue(() => undefined)).toThrow(
+      'JSON-serializable',
+    );
+    expect(() => validateSettingValue(Symbol('json'))).toThrow(
+      'JSON-serializable',
+    );
+    expect(() => validateSettingValue(new Date())).toThrow(
+      'JSON-serializable',
+    );
 
     const circular: Record<string, unknown> = {};
     circular.self = circular;
 
     expect(() => validateSettingValue(circular)).toThrow('JSON-serializable');
+  });
+
+  it('rejects oversized serialized setting values', () => {
+    expect(() => validateSettingValue('a'.repeat(8 * 1024))).toThrow('8 KB');
   });
 
   it('rejects invalid recent run payloads', () => {
