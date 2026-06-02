@@ -2,7 +2,7 @@
   "name": "easytools",
   "version": "0.1.0",
   "description": "Local Electron toolbox for daily utilities.",
-  "main": "dist/main/index.js",
+  "main": "out/main/index.js",
   "type": "module",
   "scripts": {
     "dev": "electron-vite dev",
@@ -12,7 +12,6 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^5.0.0",
     "better-sqlite3": "^11.10.0",
     "electron": "^35.0.0",
     "electron-vite": "^3.1.0",
@@ -21,6 +20,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
