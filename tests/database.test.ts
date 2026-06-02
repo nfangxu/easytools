@@ -25,6 +25,16 @@ describe('database repository', () => {
     expect(db.getSetting('json')).toEqual({ indent: 2 });
   });
 
+  it('persists settings after close and reopen', () => {
+    const databasePath = join(tempDir, 'easytools.db');
+
+    db.setSetting('json', { indent: 4 });
+    db.close();
+    db = createDatabase(databasePath);
+
+    expect(db.getSetting('json')).toEqual({ indent: 4 });
+  });
+
   it('lists recent runs without raw input', () => {
     db.addRecentRun({
       toolId: 'base64',
@@ -44,5 +54,8 @@ describe('database repository', () => {
     expect(recentRun.id).toEqual(expect.any(Number));
     expect(recentRun.createdAt).toEqual(expect.any(String));
     expect(recentRun.createdAt).not.toHaveLength(0);
+    expect(Object.keys(recentRun).sort()).toEqual(
+      ['createdAt', 'id', 'operation', 'preview', 'summary', 'toolId'].sort(),
+    );
   });
 });

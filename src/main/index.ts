@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { createDatabase } from './database';
 import { registerIpc } from './ipc';
 
+let database: ReturnType<typeof createDatabase> | null = null;
+
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 1180,
@@ -26,9 +28,16 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  const database = createDatabase(join(app.getPath('userData'), 'easytools.db'));
+  database = createDatabase(join(app.getPath('userData'), 'easytools.db'));
   registerIpc(database);
   createWindow();
+});
+
+app.on('will-quit', () => {
+  if (!database) return;
+
+  database.close();
+  database = null;
 });
 
 app.on('window-all-closed', () => {
