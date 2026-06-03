@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 
 import { Base64Tool } from './base64/Base64Tool';
 import { JsonTool } from './json/JsonTool';
+import { LlmApiCheckerTool } from './llm-api/LlmApiCheckerTool';
 import { TimestampTool } from './timestamp/TimestampTool';
 
 export interface ToolComponentProps {
@@ -9,9 +10,9 @@ export interface ToolComponentProps {
 }
 
 export interface ToolDefinition {
-  id: 'json' | 'base64' | 'timestamp';
+  id: 'json' | 'base64' | 'timestamp' | 'llm-api';
   name: string;
-  category: '文本处理' | '时间日期';
+  category: '文本处理' | '时间日期' | 'AI 工具';
   component: ComponentType<ToolComponentProps>;
 }
 
@@ -33,5 +34,11 @@ export const tools: ToolDefinition[] = [
     name: '时间戳转换',
     category: '时间日期',
     component: TimestampTool,
+  },
+  {
+    id: 'llm-api',
+    name: '大模型 API 校验',
+    category: 'AI 工具',
+    component: LlmApiCheckerTool,
   },
 ];

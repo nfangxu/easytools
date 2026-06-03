@@ -26,7 +26,8 @@ body {
 
 button,
 textarea,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -209,7 +210,8 @@ button.secondary:hover:not(:disabled) {
 }
 
 textarea,
-input {
+input,
+select {
   width: 100%;
   border: 1px solid #c9d2dc;
   border-radius: 6px;
@@ -219,7 +221,8 @@ input {
 }
 
 textarea:focus,
-input:focus {
+input:focus,
+select:focus {
   border-color: #3577c9;
   box-shadow: 0 0 0 3px rgb(53 119 201 / 14%);
 }
@@ -234,6 +237,11 @@ textarea {
 }
 
 input {
+  height: 38px;
+  padding: 0 10px;
+}
+
+select {
   height: 38px;
   padding: 0 10px;
 }
@@ -278,6 +286,82 @@ input {
 
 .result-area {
   min-height: 300px;
+}
+
+.llm-form {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(240px, 1fr) minmax(180px, 260px);
+  gap: 14px;
+}
+
+.llm-key-field {
+  grid-column: 1 / -1;
+}
+
+.llm-key-field textarea {
+  min-height: 150px;
+}
+
+.llm-results {
+  overflow-x: auto;
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+}
+
+.llm-results table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+.llm-results caption {
+  padding: 10px 12px;
+  color: #516273;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.llm-results th,
+.llm-results td {
+  border-top: 1px solid #e3e8ee;
+  padding: 9px 10px;
+  font-size: 12px;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.llm-results th {
+  color: #344152;
+  background: #f7f9fb;
+  font-weight: 750;
+}
+
+.llm-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.llm-status-available {
+  background: #e8f6ee;
+  color: #1d6b3a;
+}
+
+.llm-status-partial {
+  background: #fff8e7;
+  color: #8a5a11;
+}
+
+.llm-status-unavailable {
+  background: #fff0f0;
+  color: #a62d2d;
 }
 
 .recent-rail {
@@ -370,8 +454,13 @@ input {
   }
 
   .textarea-pair,
-  .timestamp-grid {
+  .timestamp-grid,
+  .llm-form {
     grid-template-columns: 1fr;
+  }
+
+  .llm-key-field {
+    grid-column: auto;
   }
 
   textarea {
