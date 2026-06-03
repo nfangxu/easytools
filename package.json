@@ -7,6 +7,9 @@
   "scripts": {
     "dev": "npm run rebuild:sqlite:electron && electron-vite dev",
     "build": "npm run typecheck && npm run rebuild:sqlite:electron && electron-vite build",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac",
     "rebuild:sqlite:electron": "cd node_modules/better-sqlite3 && npm_config_runtime=electron npm_config_target=$(node -p \"require('../electron/package.json').version\") npm_config_disturl=https://electronjs.org/headers node-gyp rebuild --release",
     "rebuild:sqlite:node": "cd node_modules/better-sqlite3 && node-gyp rebuild --release",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
@@ -27,9 +30,36 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "electron-builder": "^26.8.1",
     "node-gyp": "^12.3.0",
     "typescript": "^5.7.0",
     "vite": "^6.0.0",
     "vitest": "^3.0.0"
+  },
+  "build": {
+    "appId": "com.easytools.app",
+    "productName": "EasyTools",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "out/main/index.js"
+    },
+    "npmRebuild": false,
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ]
+    }
   }
 }
