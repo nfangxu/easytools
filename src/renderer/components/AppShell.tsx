@@ -2,6 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } 
 
 import type { RecentRun } from '../../shared/types';
 import { tools, type ToolDefinition } from '../tools/registry';
+import { TitleBar } from './TitleBar';
+
+type ToolId = ToolDefinition['id'];
+
+export type AppRoute = { page: 'home' } | { page: 'tool'; toolId: ToolId };
 
 function groupToolsByCategory(toolList: ToolDefinition[]): Array<[ToolDefinition['category'], ToolDefinition[]]> {
   const groups: Array<[ToolDefinition['category'], ToolDefinition[]]> = [];
@@ -36,6 +41,35 @@ function formatRecentTime(value: string): string {
 
 export function isLatestRecentRunsRequest(requestId: number, latestRequestId: number): boolean {
   return requestId === latestRequestId;
+}
+
+export function getAppTitle(route: AppRoute, selectedToolName: string): string {
+  return route.page === 'tool' ? `EasyTools / ${selectedToolName}` : 'EasyTools';
+}
+
+export function getVisitedToolIds(visitedToolIds: ToolId[], route: AppRoute): ToolId[] {
+  if (route.page === 'home' || visitedToolIds.includes(route.toolId)) {
+    return visitedToolIds;
+  }
+
+  return [...visitedToolIds, route.toolId];
+}
+
+export function getToolPanelState(
+  toolId: ToolId,
+  route: AppRoute,
+  visitedToolIds: ToolId[],
+): { shouldMount: boolean; isActive: boolean } {
+  const isActive = route.page === 'tool' && route.toolId === toolId;
+
+  return {
+    shouldMount: isActive || visitedToolIds.includes(toolId),
+    isActive,
+  };
+}
+
+export function shouldShowRecentRuns(route: AppRoute): boolean {
+  return route.page === 'tool';
 }
 
 interface RecentRunsRailProps {
@@ -111,13 +145,16 @@ function RecentRunsRail({ recentRuns, status }: RecentRunsRailProps): ReactEleme
 }
 
 export function AppShell(): ReactElement {
-  const [selectedToolId, setSelectedToolId] = useState<ToolDefinition['id']>('json');
+  const [route, setRoute] = useState<AppRoute>({ page: 'home' });
+  const [visitedToolIds, setVisitedToolIds] = useState<ToolId[]>([]);
   const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
   const [recentRunsStatus, setRecentRunsStatus] = useState('');
   const recentRunsRequestIdRef = useRef(0);
   const groupedTools = useMemo(() => groupToolsByCategory(tools), []);
-  const selectedTool = tools.find((tool) => tool.id === selectedToolId) ?? tools[0];
-  const SelectedToolComponent = selectedTool.component;
+  const selectedTool = route.page === 'tool'
+    ? tools.find((tool) => tool.id === route.toolId) ?? tools[0]
+    : tools[0];
+  const appTitle = getAppTitle(route, selectedTool.name);
 
   const loadRecentRuns = useCallback(async () => {
     const requestId = recentRunsRequestIdRef.current + 1;
@@ -139,40 +176,87 @@ export function AppShell(): ReactElement {
     void loadRecentRuns();
   }, [loadRecentRuns]);
 
+  function openTool(toolId: ToolId): void {
+    const nextRoute: AppRoute = { page: 'tool', toolId };
+    setVisitedToolIds((current) => getVisitedToolIds(current, nextRoute));
+    setRoute(nextRoute);
+  }
+
   return (
-    <main className="app-shell">
-      <aside className="sidebar">
-        <div className="brand-block">
-          <div className="brand">EasyTools</div>
-          <p>本地桌面工具箱</p>
-        </div>
-        <nav className="tool-nav" aria-label="工具列表">
-          {groupedTools.map(([category, categoryTools]) => (
-            <section key={category} className="nav-group">
-              <h2>{category}</h2>
-              <div className="nav-items">
-                {categoryTools.map((tool) => (
-                  <button
-                    key={tool.id}
-                    type="button"
-                    className={tool.id === selectedToolId ? 'nav-item active' : 'nav-item'}
-                    aria-pressed={tool.id === selectedToolId}
-                    onClick={() => {
-                      setSelectedToolId(tool.id);
-                    }}
-                  >
-                    {tool.name}
-                  </button>
-                ))}
+    <div className="app-frame">
+      <TitleBar title={appTitle} />
+      <main className="app-shell" aria-label={appTitle}>
+        {route.page === 'home' ? (
+          <section className="home-page" aria-label="工具列表">
+            <header className="home-hero">
+              <p>EasyTools</p>
+              <h1>选择一个本地工具</h1>
+            </header>
+            <div className="tool-catalog">
+              {groupedTools.map(([category, categoryTools]) => (
+                <section key={category} className="tool-category">
+                  <h2>{category}</h2>
+                  <div className="tool-card-grid">
+                    {categoryTools.map((tool) => (
+                      <button
+                        key={tool.id}
+                        type="button"
+                        className="tool-card"
+                        onClick={() => {
+                          openTool(tool.id);
+                        }}
+                      >
+                        <span>{tool.name}</span>
+                        <small>{tool.category}</small>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <section className="tool-page" aria-label={selectedTool.name}>
+            <header className="tool-page-header">
+              <button
+                type="button"
+                className="secondary back-button"
+                onClick={() => {
+                  setRoute({ page: 'home' });
+                }}
+              >
+                返回工具列表
+              </button>
+              <div>
+                <p>EasyTools</p>
+                <h1>{selectedTool.name}</h1>
               </div>
-            </section>
-          ))}
-        </nav>
-      </aside>
-      <section className="workspace" aria-label={selectedTool.name}>
-        <SelectedToolComponent onRecentRunAdded={() => void loadRecentRuns()} />
-      </section>
-      <RecentRunsRail recentRuns={recentRuns} status={recentRunsStatus} />
-    </main>
+            </header>
+            <div className="tool-page-content">
+              <section className="workspace" aria-label={selectedTool.name}>
+                {tools.map((tool) => {
+                  const panelState = getToolPanelState(tool.id, route, visitedToolIds);
+
+                  if (!panelState.shouldMount) {
+                    return null;
+                  }
+
+                  const ToolComponent = tool.component;
+
+                  return (
+                    <div key={tool.id} hidden={!panelState.isActive}>
+                      <ToolComponent onRecentRunAdded={() => void loadRecentRuns()} />
+                    </div>
+                  );
+                })}
+              </section>
+              {shouldShowRecentRuns(route) ? (
+                <RecentRunsRail recentRuns={recentRuns} status={recentRunsStatus} />
+              ) : null}
+            </div>
+          </section>
+        )}
+      </main>
+    </div>
   );
 }

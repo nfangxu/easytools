@@ -53,7 +53,14 @@ export interface LlmApiBatchValidationResult {
   results: LlmApiKeyValidationResult[];
 }
 
+export interface WindowControlApi {
+  minimize(): Promise<void>;
+  toggleMaximize(): Promise<void>;
+  close(): Promise<void>;
+}
+
 export interface EasyToolsApi {
+  window: WindowControlApi;
   getSetting(namespace: string): Promise<SettingValue | null>;
   setSetting(namespace: string, value: SettingValue): Promise<void>;
   listRecentRuns(): Promise<RecentRun[]>;

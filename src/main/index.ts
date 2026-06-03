@@ -13,6 +13,7 @@ function createWindow(): void {
     minWidth: 920,
     minHeight: 620,
     title: 'EasyTools',
+    frame: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,

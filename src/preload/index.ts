@@ -8,6 +8,17 @@ import type {
 } from '../shared/types';
 
 const easytools: EasyToolsApi = {
+  window: {
+    minimize() {
+      return ipcRenderer.invoke('window:minimize');
+    },
+    toggleMaximize() {
+      return ipcRenderer.invoke('window:toggle-maximize');
+    },
+    close() {
+      return ipcRenderer.invoke('window:close');
+    },
+  },
   getSetting(namespace: string) {
     return ipcRenderer.invoke('settings:get', namespace);
   },

@@ -1,10 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getWindowControlAction,
   validateNamespace,
   validateRecentRunInput,
   validateSettingValue,
 } from '../src/main/ipc';
+
+describe('window control IPC', () => {
+  it('maps allowed window control channels to window actions', () => {
+    expect(getWindowControlAction('window:minimize')).toBe('minimize');
+    expect(getWindowControlAction('window:toggle-maximize')).toBe('toggleMaximize');
+    expect(getWindowControlAction('window:close')).toBe('close');
+  });
+
+  it('rejects unknown window control channels', () => {
+    expect(() => getWindowControlAction('window:open-devtools')).toThrow('Unsupported window control channel');
+  });
+});
 
 describe('ipc validation', () => {
   it('accepts valid IPC payloads', () => {

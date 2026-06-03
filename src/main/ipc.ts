@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 
 import type {
   LlmApiValidationInput,
@@ -17,6 +17,24 @@ const MAX_SETTING_NODES = 1000;
 const MAX_LLM_BASE_URL_LENGTH = 300;
 const MAX_LLM_API_KEY_LENGTH = 500;
 const MAX_LLM_API_KEYS = 50;
+
+export type WindowControlAction = 'minimize' | 'toggleMaximize' | 'close';
+
+const windowControlChannels = {
+  'window:minimize': 'minimize',
+  'window:toggle-maximize': 'toggleMaximize',
+  'window:close': 'close',
+} as const;
+
+export function getWindowControlAction(channel: string): WindowControlAction {
+  const action = windowControlChannels[channel as keyof typeof windowControlChannels];
+
+  if (!action) {
+    throw new Error('Unsupported window control channel.');
+  }
+
+  return action;
+}
 
 export function registerIpc(database: ReturnType<typeof createDatabase>): void {
   ipcMain.handle('settings:get', (_event, namespace: string) =>
@@ -42,6 +60,29 @@ export function registerIpc(database: ReturnType<typeof createDatabase>): void {
   ipcMain.handle('llm-api:validate', (_event, input: unknown) =>
     validateLlmApiBatch(validateLlmApiValidationInput(input)),
   );
+
+  for (const channel of Object.keys(windowControlChannels)) {
+    ipcMain.handle(channel, (event) => {
+      const window = BrowserWindow.fromWebContents(event.sender);
+      if (!window) return;
+
+      switch (getWindowControlAction(channel)) {
+        case 'minimize':
+          window.minimize();
+          break;
+        case 'toggleMaximize':
+          if (window.isMaximized()) {
+            window.unmaximize();
+          } else {
+            window.maximize();
+          }
+          break;
+        case 'close':
+          window.close();
+          break;
+      }
+    });
+  }
 }
 
 export function validateNamespace(namespace: unknown): string {
