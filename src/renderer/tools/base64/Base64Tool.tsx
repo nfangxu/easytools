@@ -51,7 +51,7 @@ export function Base64Tool({ onRecentRunAdded }: Base64ToolProps): ReactElement 
         summary: operation === 'encode' ? 'Base64 编码' : 'Base64 解码',
         preview: result.value.slice(0, 120),
       },
-      window.easytools.addRecentRun,
+      window.easytools?.addRecentRun,
     );
     setLatestStatus(statusRequestId, recentRunStatus);
     if (!recentRunStatus) {

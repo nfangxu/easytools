@@ -68,7 +68,7 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
         summary: '时间戳转日期',
         preview: nextState.result.slice(0, 120),
       },
-      window.easytools.addRecentRun,
+      window.easytools?.addRecentRun,
     );
     setLatestStatus(statusRequestId, recentRunStatus);
     if (!recentRunStatus) {
@@ -98,7 +98,7 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
         summary: '日期转时间戳',
         preview: nextState.result.slice(0, 120),
       },
-      window.easytools.addRecentRun,
+      window.easytools?.addRecentRun,
     );
     setLatestStatus(statusRequestId, recentRunStatus);
     if (!recentRunStatus) {

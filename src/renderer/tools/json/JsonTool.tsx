@@ -53,7 +53,7 @@ export function JsonTool({ onRecentRunAdded }: JsonToolProps): ReactElement {
         summary: operation === 'format' ? 'JSON 格式化' : 'JSON 压缩',
         preview: result.value.slice(0, 120),
       },
-      window.easytools.addRecentRun,
+      window.easytools?.addRecentRun,
     );
     setLatestStatus(statusRequestId, recentRunStatus);
     if (!recentRunStatus) {

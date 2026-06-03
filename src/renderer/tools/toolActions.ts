@@ -3,6 +3,7 @@ import type { RecentRun, RecentRunInput } from '../../shared/types';
 export const TOOL_STATUS = {
   copied: '已复制',
   copyFailed: '复制失败',
+  electronApiUnavailable: 'Electron API 不可用，请通过 npm run dev 启动桌面应用。',
   recentRunSaveFailed: '最近记录保存失败',
 } as const;
 
@@ -28,8 +29,12 @@ export async function copyTextToClipboard(
 
 export async function saveRecentRun(
   input: RecentRunInput,
-  addRecentRun: (value: RecentRunInput) => Promise<RecentRun>,
+  addRecentRun: ((value: RecentRunInput) => Promise<RecentRun>) | undefined,
 ): Promise<string> {
+  if (!addRecentRun) {
+    return TOOL_STATUS.electronApiUnavailable;
+  }
+
   try {
     await addRecentRun(input);
     return '';

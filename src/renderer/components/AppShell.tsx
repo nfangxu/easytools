@@ -48,7 +48,13 @@ type RecentRunsReadResult = { ok: true; runs: RecentRun[] } | { ok: false };
 
 const RECENT_RUNS_LOAD_FAILED_STATUS = '最近记录加载失败';
 
-export async function readRecentRuns(listRecentRuns: () => Promise<RecentRun[]>): Promise<RecentRunsReadResult> {
+export async function readRecentRuns(
+  listRecentRuns: (() => Promise<RecentRun[]>) | undefined,
+): Promise<RecentRunsReadResult> {
+  if (!listRecentRuns) {
+    return { ok: false };
+  }
+
   try {
     return { ok: true, runs: await listRecentRuns() };
   } catch {
@@ -116,7 +122,7 @@ export function AppShell(): ReactElement {
   const loadRecentRuns = useCallback(async () => {
     const requestId = recentRunsRequestIdRef.current + 1;
     recentRunsRequestIdRef.current = requestId;
-    const result = await readRecentRuns(window.easytools.listRecentRuns);
+    const result = await readRecentRuns(window.easytools?.listRecentRuns);
     const loadState = getRecentRunsLoadState(requestId, recentRunsRequestIdRef.current, result);
 
     if (!loadState.shouldApply) {

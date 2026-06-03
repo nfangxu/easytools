@@ -6,6 +6,7 @@ import type {
   LlmApiProtocol,
 } from '../../../shared/types';
 import { ToolChrome } from '../../components/ToolChrome';
+import { TOOL_STATUS } from '../toolActions';
 import {
   buildLlmApiRecentRunSummary,
   parseApiKeys,
@@ -47,6 +48,10 @@ export function LlmApiCheckerTool({ onRecentRunAdded }: LlmApiCheckerToolProps):
     setResult(null);
 
     try {
+      if (!window.easytools?.validateLlmApi) {
+        throw new Error(TOOL_STATUS.electronApiUnavailable);
+      }
+
       const validationResult = await window.easytools.validateLlmApi({
         protocol,
         baseUrl,
@@ -73,6 +78,11 @@ export function LlmApiCheckerTool({ onRecentRunAdded }: LlmApiCheckerToolProps):
     });
 
     try {
+      if (!window.easytools?.addRecentRun) {
+        setStatus(`${recentRun.summary}，${TOOL_STATUS.electronApiUnavailable}`);
+        return;
+      }
+
       await window.easytools.addRecentRun({
         toolId: 'llm-api',
         operation: protocol,

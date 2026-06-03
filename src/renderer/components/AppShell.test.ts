@@ -26,4 +26,8 @@ describe('AppShell recent run loading', () => {
       }),
     ).resolves.toEqual({ ok: false });
   });
+
+  it('treats a missing preload API as a failed recent-run load', async () => {
+    await expect(readRecentRuns(undefined)).resolves.toEqual({ ok: false });
+  });
 });
