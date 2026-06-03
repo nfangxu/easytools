@@ -56,9 +56,10 @@ export function createDatabase(path: string) {
   const getRecentRunStatement = sqlite.prepare<[number], RecentRunRow>(
     'SELECT id, tool_id, operation, summary, preview, created_at FROM recent_runs WHERE id = ?',
   );
-  const listRecentRunsStatement = sqlite.prepare<[], RecentRunRow>(`
+  const listRecentRunsStatement = sqlite.prepare<[string], RecentRunRow>(`
     SELECT id, tool_id, operation, summary, preview, created_at
     FROM recent_runs
+    WHERE tool_id = ?
     ORDER BY created_at DESC, id DESC
     LIMIT 20
   `);
@@ -89,8 +90,8 @@ export function createDatabase(path: string) {
       return mapRecentRun(row);
     },
 
-    listRecentRuns(): RecentRun[] {
-      return listRecentRunsStatement.all().map(mapRecentRun);
+    listRecentRuns(toolId: string): RecentRun[] {
+      return listRecentRunsStatement.all(toolId).map(mapRecentRun);
     },
 
     close(): void {

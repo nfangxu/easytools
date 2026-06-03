@@ -51,7 +51,9 @@ export function registerIpc(database: ReturnType<typeof createDatabase>): void {
     },
   );
 
-  ipcMain.handle('recent-runs:list', () => database.listRecentRuns());
+  ipcMain.handle('recent-runs:list', (_event, toolId: unknown) =>
+    database.listRecentRuns(validateNamespace(toolId)),
+  );
 
   ipcMain.handle('recent-runs:add', (_event, input: unknown) =>
     database.addRecentRun(validateRecentRunInput(input)),

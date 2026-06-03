@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getAppTitle,
+  getPageTransitionClassName,
   getRecentRunsLoadState,
+  getRecentRunsOpenStateAfterOutsideClick,
+  getToolPanelClassName,
   getToolPanelState,
   getVisitedToolIds,
   isLatestRecentRunsRequest,
@@ -26,9 +29,26 @@ describe('AppShell page state', () => {
     expect(getToolPanelState('timestamp', route, ['json', 'base64'])).toEqual({ shouldMount: false, isActive: false });
   });
 
-  it('only shows recent runs on tool pages', () => {
-    expect(shouldShowRecentRuns({ page: 'home' })).toBe(false);
-    expect(shouldShowRecentRuns({ page: 'tool', toolId: 'json' })).toBe(true);
+  it('only shows recent runs when a tool page has the recent runs panel open', () => {
+    expect(shouldShowRecentRuns({ page: 'home' }, true)).toBe(false);
+    expect(shouldShowRecentRuns({ page: 'tool', toolId: 'json' }, false)).toBe(false);
+    expect(shouldShowRecentRuns({ page: 'tool', toolId: 'json' }, true)).toBe(true);
+  });
+
+  it('closes recent runs when an outside popover click occurs', () => {
+    expect(getRecentRunsOpenStateAfterOutsideClick({ page: 'home' }, true)).toBe(false);
+    expect(getRecentRunsOpenStateAfterOutsideClick({ page: 'tool', toolId: 'json' }, true)).toBe(false);
+    expect(getRecentRunsOpenStateAfterOutsideClick({ page: 'tool', toolId: 'json' }, false)).toBe(false);
+  });
+
+  it('adds page transition classes for mounted pages', () => {
+    expect(getPageTransitionClassName({ page: 'home' })).toBe('page-transition page-transition-home');
+    expect(getPageTransitionClassName({ page: 'tool', toolId: 'json' })).toBe('page-transition page-transition-tool');
+  });
+
+  it('adds tool panel transition classes for visible and hidden panels', () => {
+    expect(getToolPanelClassName(true)).toBe('tool-panel-slot tool-panel-slot-active');
+    expect(getToolPanelClassName(false)).toBe('tool-panel-slot tool-panel-slot-inactive');
   });
 });
 
@@ -49,15 +69,27 @@ describe('AppShell recent run loading', () => {
     });
   });
 
+  it('loads recent runs for the current tool', async () => {
+    const requestedToolIds: string[] = [];
+
+    await expect(
+      readRecentRuns(async (toolId) => {
+        requestedToolIds.push(toolId);
+        return [];
+      }, 'json'),
+    ).resolves.toEqual({ ok: true, runs: [] });
+    expect(requestedToolIds).toEqual(['json']);
+  });
+
   it('converts rejected recent-run loads into a failed result', async () => {
     await expect(
       readRecentRuns(async () => {
         throw new Error('ipc failed');
-      }),
+      }, 'json'),
     ).resolves.toEqual({ ok: false });
   });
 
   it('treats a missing preload API as a failed recent-run load', async () => {
-    await expect(readRecentRuns(undefined)).resolves.toEqual({ ok: false });
+    await expect(readRecentRuns(undefined, 'json')).resolves.toEqual({ ok: false });
   });
 });

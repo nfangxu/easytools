@@ -25,8 +25,8 @@ const easytools: EasyToolsApi = {
   setSetting(namespace: string, value: SettingValue) {
     return ipcRenderer.invoke('settings:set', namespace, value);
   },
-  listRecentRuns() {
-    return ipcRenderer.invoke('recent-runs:list');
+  listRecentRuns(toolId: string) {
+    return ipcRenderer.invoke('recent-runs:list', toolId);
   },
   addRecentRun(input: RecentRunInput) {
     return ipcRenderer.invoke('recent-runs:add', input);

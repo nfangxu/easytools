@@ -63,7 +63,7 @@ export interface EasyToolsApi {
   window: WindowControlApi;
   getSetting(namespace: string): Promise<SettingValue | null>;
   setSetting(namespace: string, value: SettingValue): Promise<void>;
-  listRecentRuns(): Promise<RecentRun[]>;
+  listRecentRuns(toolId: string): Promise<RecentRun[]>;
   addRecentRun(input: RecentRunInput): Promise<RecentRun>;
   validateLlmApi(input: LlmApiValidationInput): Promise<LlmApiBatchValidationResult>;
 }

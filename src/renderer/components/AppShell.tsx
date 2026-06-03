@@ -68,8 +68,31 @@ export function getToolPanelState(
   };
 }
 
-export function shouldShowRecentRuns(route: AppRoute): boolean {
-  return route.page === 'tool';
+export function getPageTransitionClassName(route: AppRoute): string {
+  return route.page === 'home'
+    ? 'page-transition page-transition-home'
+    : 'page-transition page-transition-tool';
+}
+
+export function getToolPanelClassName(isActive: boolean): string {
+  return isActive
+    ? 'tool-panel-slot tool-panel-slot-active'
+    : 'tool-panel-slot tool-panel-slot-inactive';
+}
+
+export function shouldShowRecentRuns(route: AppRoute, isRecentRunsOpen: boolean): boolean {
+  return route.page === 'tool' && isRecentRunsOpen;
+}
+
+export function getRecentRunsOpenStateAfterOutsideClick(
+  route: AppRoute,
+  isRecentRunsOpen: boolean,
+): boolean {
+  if (!shouldShowRecentRuns(route, isRecentRunsOpen)) {
+    return false;
+  }
+
+  return false;
 }
 
 interface RecentRunsRailProps {
@@ -83,14 +106,15 @@ type RecentRunsReadResult = { ok: true; runs: RecentRun[] } | { ok: false };
 const RECENT_RUNS_LOAD_FAILED_STATUS = '最近记录加载失败';
 
 export async function readRecentRuns(
-  listRecentRuns: (() => Promise<RecentRun[]>) | undefined,
+  listRecentRuns: ((toolId: string) => Promise<RecentRun[]>) | undefined,
+  toolId: ToolId,
 ): Promise<RecentRunsReadResult> {
   if (!listRecentRuns) {
     return { ok: false };
   }
 
   try {
-    return { ok: true, runs: await listRecentRuns() };
+    return { ok: true, runs: await listRecentRuns(toolId) };
   } catch {
     return { ok: false };
   }
@@ -149,6 +173,7 @@ export function AppShell(): ReactElement {
   const [visitedToolIds, setVisitedToolIds] = useState<ToolId[]>([]);
   const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
   const [recentRunsStatus, setRecentRunsStatus] = useState('');
+  const [isRecentRunsOpen, setIsRecentRunsOpen] = useState(false);
   const recentRunsRequestIdRef = useRef(0);
   const groupedTools = useMemo(() => groupToolsByCategory(tools), []);
   const selectedTool = route.page === 'tool'
@@ -156,10 +181,10 @@ export function AppShell(): ReactElement {
     : tools[0];
   const appTitle = getAppTitle(route, selectedTool.name);
 
-  const loadRecentRuns = useCallback(async () => {
+  const loadRecentRuns = useCallback(async (toolId: ToolId) => {
     const requestId = recentRunsRequestIdRef.current + 1;
     recentRunsRequestIdRef.current = requestId;
-    const result = await readRecentRuns(window.easytools?.listRecentRuns);
+    const result = await readRecentRuns(window.easytools?.listRecentRuns, toolId);
     const loadState = getRecentRunsLoadState(requestId, recentRunsRequestIdRef.current, result);
 
     if (!loadState.shouldApply) {
@@ -173,8 +198,10 @@ export function AppShell(): ReactElement {
   }, []);
 
   useEffect(() => {
-    void loadRecentRuns();
-  }, [loadRecentRuns]);
+    if (route.page === 'tool') {
+      void loadRecentRuns(route.toolId);
+    }
+  }, [loadRecentRuns, route]);
 
   function openTool(toolId: ToolId): void {
     const nextRoute: AppRoute = { page: 'tool', toolId };
@@ -187,7 +214,7 @@ export function AppShell(): ReactElement {
       <TitleBar title={appTitle} />
       <main className="app-shell" aria-label={appTitle}>
         {route.page === 'home' ? (
-          <section className="home-page" aria-label="工具列表">
+          <section className={`home-page ${getPageTransitionClassName(route)}`} aria-label="工具列表">
             <header className="home-hero">
               <p>EasyTools</p>
               <h1>选择一个本地工具</h1>
@@ -216,21 +243,34 @@ export function AppShell(): ReactElement {
             </div>
           </section>
         ) : (
-          <section className="tool-page" aria-label={selectedTool.name}>
+          <section className={`tool-page ${getPageTransitionClassName(route)}`} aria-label={selectedTool.name}>
             <header className="tool-page-header">
+              <div className="tool-page-title-group">
+                <button
+                  type="button"
+                  className="secondary back-button"
+                  onClick={() => {
+                    setIsRecentRunsOpen(false);
+                    setRoute({ page: 'home' });
+                  }}
+                >
+                  返回工具列表
+                </button>
+                <div>
+                  <p>EasyTools</p>
+                  <h1>{selectedTool.name}</h1>
+                </div>
+              </div>
               <button
                 type="button"
-                className="secondary back-button"
+                className="secondary recent-runs-toggle"
+                aria-expanded={isRecentRunsOpen}
                 onClick={() => {
-                  setRoute({ page: 'home' });
+                  setIsRecentRunsOpen((current) => !current);
                 }}
               >
-                返回工具列表
+                最近运行
               </button>
-              <div>
-                <p>EasyTools</p>
-                <h1>{selectedTool.name}</h1>
-              </div>
             </header>
             <div className="tool-page-content">
               <section className="workspace" aria-label={selectedTool.name}>
@@ -244,14 +284,30 @@ export function AppShell(): ReactElement {
                   const ToolComponent = tool.component;
 
                   return (
-                    <div key={tool.id} hidden={!panelState.isActive}>
-                      <ToolComponent onRecentRunAdded={() => void loadRecentRuns()} />
+                    <div
+                      key={tool.id}
+                      className={getToolPanelClassName(panelState.isActive)}
+                      hidden={!panelState.isActive}
+                    >
+                      <ToolComponent onRecentRunAdded={() => void loadRecentRuns(tool.id)} />
                     </div>
                   );
                 })}
               </section>
-              {shouldShowRecentRuns(route) ? (
-                <RecentRunsRail recentRuns={recentRuns} status={recentRunsStatus} />
+              {shouldShowRecentRuns(route, isRecentRunsOpen) ? (
+                <>
+                  <button
+                    type="button"
+                    className="recent-popover-backdrop"
+                    aria-label="关闭最近运行"
+                    onClick={() => {
+                      setIsRecentRunsOpen(getRecentRunsOpenStateAfterOutsideClick(route, isRecentRunsOpen));
+                    }}
+                  />
+                  <div className="recent-popover">
+                    <RecentRunsRail recentRuns={recentRuns} status={recentRunsStatus} />
+                  </div>
+                </>
               ) : null}
             </div>
           </section>

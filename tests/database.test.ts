@@ -50,7 +50,7 @@ describe('database repository', () => {
       preview: 'RWFzeVRvb2xz',
     });
 
-    const [recentRun] = db.listRecentRuns();
+    const [recentRun] = db.listRecentRuns('base64');
 
     expect(recentRun).toMatchObject({
       toolId: 'base64',
@@ -64,5 +64,26 @@ describe('database repository', () => {
     expect(Object.keys(recentRun).sort()).toEqual(
       ['createdAt', 'id', 'operation', 'preview', 'summary', 'toolId'].sort(),
     );
+  });
+
+  it('lists recent runs only for the requested tool', () => {
+    db.addRecentRun({
+      toolId: 'json',
+      operation: 'format',
+      summary: 'Formatted JSON',
+    });
+    db.addRecentRun({
+      toolId: 'base64',
+      operation: 'encode',
+      summary: 'Encoded text',
+    });
+
+    expect(db.listRecentRuns('json')).toEqual([
+      expect.objectContaining({
+        toolId: 'json',
+        operation: 'format',
+        summary: 'Formatted JSON',
+      }),
+    ]);
   });
 });
