@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 interface PackageJson {
+  author?: string;
   scripts?: Record<string, string>;
+  dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   build?: {
     appId?: string;
@@ -22,13 +24,23 @@ function readPackageJson(): PackageJson {
 }
 
 describe('package build config', () => {
-  it('defines electron-builder scripts and dependency', () => {
+  it('defines electron-builder scripts and build-time Electron dependencies', () => {
     const packageJson = readPackageJson();
 
+    expect(packageJson.author).toBe('nfangxu');
+    expect(packageJson.dependencies).not.toHaveProperty('electron');
+    expect(packageJson.devDependencies).toHaveProperty('electron');
     expect(packageJson.devDependencies).toHaveProperty('electron-builder');
-    expect(packageJson.scripts?.dist).toBe('npm run build && electron-builder');
-    expect(packageJson.scripts?.['dist:win']).toBe('npm run build && electron-builder --win');
-    expect(packageJson.scripts?.['dist:mac']).toBe('npm run build && electron-builder --mac');
+    expect(packageJson.scripts?.dist).toBe('npm run build && electron-builder --publish never');
+    expect(packageJson.scripts?.['dist:win']).toBe('npm run build && electron-builder --win --publish never');
+    expect(packageJson.scripts?.['dist:mac']).toBe('npm run build && electron-builder --mac --publish never');
+  });
+
+  it('uses cross-platform sqlite rebuild scripts', () => {
+    const scripts = readPackageJson().scripts;
+
+    expect(scripts?.['rebuild:sqlite:electron']).toBe('node scripts/rebuild-sqlite.mjs electron');
+    expect(scripts?.['rebuild:sqlite:node']).toBe('node scripts/rebuild-sqlite.mjs node');
   });
 
   it('packages the built electron-vite output with platform targets', () => {
