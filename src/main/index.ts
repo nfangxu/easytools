@@ -15,7 +15,7 @@ function createWindow(): void {
     title: 'EasyTools',
     frame: false,
     webPreferences: {
-      preload: join(__dirname, '../preload/index.mjs'),
+      preload: join(__dirname, '../preload/index.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
