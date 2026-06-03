@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 import type {
   EasyToolsApi,
+  LlmApiValidationInput,
   RecentRunInput,
   SettingValue,
 } from '../shared/types';
@@ -18,6 +19,9 @@ const easytools: EasyToolsApi = {
   },
   addRecentRun(input: RecentRunInput) {
     return ipcRenderer.invoke('recent-runs:add', input);
+  },
+  validateLlmApi(input: LlmApiValidationInput) {
+    return ipcRenderer.invoke('llm-api:validate', input);
   },
 };
 
