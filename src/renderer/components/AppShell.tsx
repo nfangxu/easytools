@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
+import { ArrowLeft, ChevronsUpDown, History, Wrench } from 'lucide-react';
 
 import type { RecentRun } from '../../shared/types';
 import { tools, type ToolDefinition } from '../tools/registry';
@@ -82,6 +83,14 @@ export function getToolPanelClassName(isActive: boolean): string {
 
 export function shouldShowRecentRuns(route: AppRoute, isRecentRunsOpen: boolean): boolean {
   return route.page === 'tool' && isRecentRunsOpen;
+}
+
+export function shouldShowToolSwitcher(route: AppRoute, isToolSwitcherOpen: boolean): boolean {
+  return route.page === 'tool' && isToolSwitcherOpen;
+}
+
+export function getToolSwitcherOpenStateAfterToolSelected(): boolean {
+  return false;
 }
 
 export function getRecentRunsOpenStateAfterOutsideClick(
@@ -174,6 +183,7 @@ export function AppShell(): ReactElement {
   const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
   const [recentRunsStatus, setRecentRunsStatus] = useState('');
   const [isRecentRunsOpen, setIsRecentRunsOpen] = useState(false);
+  const [isToolSwitcherOpen, setIsToolSwitcherOpen] = useState(false);
   const recentRunsRequestIdRef = useRef(0);
   const groupedTools = useMemo(() => groupToolsByCategory(tools), []);
   const selectedTool = route.page === 'tool'
@@ -206,6 +216,8 @@ export function AppShell(): ReactElement {
   function openTool(toolId: ToolId): void {
     const nextRoute: AppRoute = { page: 'tool', toolId };
     setVisitedToolIds((current) => getVisitedToolIds(current, nextRoute));
+    setIsToolSwitcherOpen(getToolSwitcherOpenStateAfterToolSelected());
+    setIsRecentRunsOpen(false);
     setRoute(nextRoute);
   }
 
@@ -249,28 +261,43 @@ export function AppShell(): ReactElement {
                 <button
                   type="button"
                   className="secondary back-button"
+                  aria-label="返回工具列表"
                   onClick={() => {
                     setIsRecentRunsOpen(false);
+                    setIsToolSwitcherOpen(false);
                     setRoute({ page: 'home' });
                   }}
                 >
-                  返回工具列表
+                  <ArrowLeft aria-hidden="true" size={16} />
                 </button>
-                <div>
-                  <p>EasyTools</p>
-                  <h1>{selectedTool.name}</h1>
-                </div>
+                <button
+                  type="button"
+                  className="secondary tool-switcher-toggle"
+                  aria-expanded={isToolSwitcherOpen}
+                  onClick={() => {
+                    setIsRecentRunsOpen(false);
+                    setIsToolSwitcherOpen((current) => !current);
+                  }}
+                >
+                  <Wrench aria-hidden="true" size={16} />
+                  <span>{selectedTool.name}</span>
+                  <ChevronsUpDown aria-hidden="true" size={15} />
+                </button>
               </div>
-              <button
-                type="button"
-                className="secondary recent-runs-toggle"
-                aria-expanded={isRecentRunsOpen}
-                onClick={() => {
-                  setIsRecentRunsOpen((current) => !current);
-                }}
-              >
-                最近运行
-              </button>
+              <div className="tool-page-actions">
+                <button
+                  type="button"
+                  className="secondary recent-runs-toggle"
+                  aria-expanded={isRecentRunsOpen}
+                  onClick={() => {
+                    setIsToolSwitcherOpen(false);
+                    setIsRecentRunsOpen((current) => !current);
+                  }}
+                >
+                  <History aria-hidden="true" size={16} />
+                  <span>最近运行</span>
+                </button>
+              </div>
             </header>
             <div className="tool-page-content">
               <section className="workspace" aria-label={selectedTool.name}>
@@ -294,16 +321,56 @@ export function AppShell(): ReactElement {
                   );
                 })}
               </section>
+              {shouldShowRecentRuns(route, isRecentRunsOpen) || shouldShowToolSwitcher(route, isToolSwitcherOpen) ? (
+                <button
+                  type="button"
+                  className="recent-popover-backdrop"
+                  aria-label="关闭辅助面板"
+                  onClick={() => {
+                    setIsRecentRunsOpen(getRecentRunsOpenStateAfterOutsideClick(route, isRecentRunsOpen));
+                    setIsToolSwitcherOpen(false);
+                  }}
+                />
+              ) : null}
+              {shouldShowToolSwitcher(route, isToolSwitcherOpen) ? (
+                <div className="tool-switcher-popover">
+                  <section className="tool-switcher-panel" aria-label="切换工具">
+                    <header className="tool-switcher-header">
+                      <h2>切换工具</h2>
+                    </header>
+                    <div className="tool-switcher-list">
+                      {groupedTools.map(([category, categoryTools]) => (
+                        <div key={category} className="tool-switcher-group">
+                          <h3>{category}</h3>
+                          {categoryTools.map((tool) => {
+                            const isActiveTool = route.page === 'tool' && route.toolId === tool.id;
+
+                            return (
+                              <button
+                                key={tool.id}
+                                type="button"
+                                className={
+                                  isActiveTool
+                                    ? 'tool-switcher-item tool-switcher-item-active'
+                                    : 'tool-switcher-item'
+                                }
+                                onClick={() => {
+                                  openTool(tool.id);
+                                }}
+                              >
+                                <span>{tool.name}</span>
+                                <small>{tool.category}</small>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              ) : null}
               {shouldShowRecentRuns(route, isRecentRunsOpen) ? (
                 <>
-                  <button
-                    type="button"
-                    className="recent-popover-backdrop"
-                    aria-label="关闭最近运行"
-                    onClick={() => {
-                      setIsRecentRunsOpen(getRecentRunsOpenStateAfterOutsideClick(route, isRecentRunsOpen));
-                    }}
-                  />
                   <div className="recent-popover">
                     <RecentRunsRail recentRuns={recentRuns} status={recentRunsStatus} />
                   </div>

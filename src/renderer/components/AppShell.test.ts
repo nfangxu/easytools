@@ -4,6 +4,7 @@ import {
   getAppTitle,
   getPageTransitionClassName,
   getRecentRunsLoadState,
+  getToolSwitcherOpenStateAfterToolSelected,
   getRecentRunsOpenStateAfterOutsideClick,
   getToolPanelClassName,
   getToolPanelState,
@@ -11,6 +12,7 @@ import {
   isLatestRecentRunsRequest,
   readRecentRuns,
   shouldShowRecentRuns,
+  shouldShowToolSwitcher,
   type AppRoute,
 } from './AppShell';
 
@@ -33,6 +35,16 @@ describe('AppShell page state', () => {
     expect(shouldShowRecentRuns({ page: 'home' }, true)).toBe(false);
     expect(shouldShowRecentRuns({ page: 'tool', toolId: 'json' }, false)).toBe(false);
     expect(shouldShowRecentRuns({ page: 'tool', toolId: 'json' }, true)).toBe(true);
+  });
+
+  it('only shows the tool switcher popover while a tool page has it open', () => {
+    expect(shouldShowToolSwitcher({ page: 'home' }, true)).toBe(false);
+    expect(shouldShowToolSwitcher({ page: 'tool', toolId: 'json' }, false)).toBe(false);
+    expect(shouldShowToolSwitcher({ page: 'tool', toolId: 'json' }, true)).toBe(true);
+  });
+
+  it('closes the tool switcher after a tool is selected', () => {
+    expect(getToolSwitcherOpenStateAfterToolSelected()).toBe(false);
   });
 
   it('closes recent runs when an outside popover click occurs', () => {

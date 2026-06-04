@@ -15,6 +15,17 @@ describe('tool page layout styles', () => {
     expect(styles).toMatch(/\.toolbar\s*{[^}]*top:\s*0/s);
   });
 
+  it('uses focused tool-page chrome with auxiliary panels hidden behind popovers', () => {
+    const styles = readFileSync(join(process.cwd(), 'src/renderer/styles.css'), 'utf8');
+
+    expect(styles).toMatch(/\.tool-page-header\s*{[^}]*min-height:\s*58px/s);
+    expect(styles).toMatch(/\.tool-page-actions\s*{[^}]*display:\s*flex/s);
+    expect(styles).toMatch(/\.tool-switcher-popover\s*{[^}]*position:\s*absolute/s);
+    expect(styles).toMatch(/\.tool-switcher-list\s*{[^}]*grid-template-columns:\s*1fr/s);
+    expect(styles).toMatch(/\.tool-switcher-item-active\s*{[^}]*background:\s*#1f2a30/s);
+    expect(styles).toMatch(/\.tool-page-content\s*{[^}]*padding:\s*12px clamp\(18px, 4vw, 42px\) 24px/s);
+  });
+
   it('animates page switches and recent-run popovers with reduced-motion support', () => {
     const styles = readFileSync(join(process.cwd(), 'src/renderer/styles.css'), 'utf8');
 
@@ -24,6 +35,7 @@ describe('tool page layout styles', () => {
     expect(styles).toMatch(/\.page-transition\s*{[^}]*animation:\s*page-enter/s);
     expect(styles).toMatch(/\.tool-panel-slot:not\(\[hidden\]\)\s*{[^}]*animation:\s*page-enter/s);
     expect(styles).toMatch(/\.recent-popover\s*{[^}]*animation:\s*popover-enter/s);
+    expect(styles).toMatch(/\.tool-switcher-popover\s*{[^}]*animation:\s*popover-enter/s);
     expect(styles).toMatch(/\.recent-popover-backdrop\s*{[^}]*animation:\s*backdrop-enter/s);
     expect(styles).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/s);
   });
