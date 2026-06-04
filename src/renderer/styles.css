@@ -606,6 +606,63 @@ select {
   gap: 14px;
 }
 
+.llm-template-summary {
+  display: grid;
+  grid-column: span 2;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.llm-template-endpoint {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  border-radius: 12px;
+  background: #fffdf8;
+  padding: 10px;
+  box-shadow: inset 0 0 0 1px #d9cfc1;
+}
+
+.llm-template-endpoint-muted {
+  opacity: 0.58;
+}
+
+.llm-template-endpoint strong {
+  color: #344152;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.llm-template-endpoint span,
+.llm-template-endpoint small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.llm-template-endpoint span {
+  color: #24303d;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+}
+
+.llm-template-endpoint small {
+  color: #82786d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.llm-template-editor {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(220px, 1fr) minmax(180px, 260px);
+  gap: 14px;
+  border-radius: 14px;
+  background: rgb(255 253 248 / 72%);
+  padding: 14px;
+  box-shadow: inset 0 0 0 1px rgb(132 124 114 / 16%);
+}
+
 .llm-key-field {
   grid-column: 1 / -1;
 }
@@ -786,11 +843,14 @@ select {
 
   .textarea-pair,
   .timestamp-grid,
-  .llm-form {
+  .llm-form,
+  .llm-template-summary,
+  .llm-template-editor {
     grid-template-columns: 1fr;
   }
 
-  .llm-key-field {
+  .llm-key-field,
+  .llm-template-summary {
     grid-column: auto;
   }
 
