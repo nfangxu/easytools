@@ -205,26 +205,28 @@ export function LlmApiCheckerTool({ onRecentRunAdded }: LlmApiCheckerToolProps):
 
   return (
     <ToolChrome title="大模型 API 校验" description="选择厂商模板，批量校验 OpenAI 与 Anthropic 兼容 API Key。">
-      <div className="llm-form">
-        <label className="field-block">
-          <span>模板</span>
-          <select
-            value={selectedTemplate.id}
-            onChange={(event) => {
-              setSelectedTemplateId(event.target.value);
-              setResults([]);
-              setError('');
-              setStatus('');
-            }}
-          >
-            {templates.map((template) => (
-              <option key={template.id} value={template.id}>
-                {template.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <TemplateEndpointSummary template={selectedTemplate} />
+      <section className="llm-config-panel" aria-label="检测配置">
+        <div className="llm-template-row">
+          <label className="field-block">
+            <span>模板</span>
+            <select
+              value={selectedTemplate.id}
+              onChange={(event) => {
+                setSelectedTemplateId(event.target.value);
+                setResults([]);
+                setError('');
+                setStatus('');
+              }}
+            >
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <TemplateEndpointSummary template={selectedTemplate} />
+        </div>
         <label className="field-block llm-key-field">
           <span>API Key（每行一个）</span>
           <textarea
@@ -234,90 +236,91 @@ export function LlmApiCheckerTool({ onRecentRunAdded }: LlmApiCheckerToolProps):
             spellCheck={false}
           />
         </label>
-      </div>
-      {isTemplateEditorOpen ? (
-        <div className="llm-template-editor">
-          <label className="field-block">
-            <span>模板名称</span>
-            <input
-              value={templateDraft.name}
-              onChange={(event) => setTemplateDraft((current) => ({ ...current, name: event.target.value }))}
-              placeholder="例如：公司网关"
-            />
-          </label>
-          <label className="field-block">
-            <span>OpenAI 协议地址</span>
-            <input
-              value={templateDraft.openaiBaseUrl}
-              onChange={(event) => setTemplateDraft((current) => ({ ...current, openaiBaseUrl: event.target.value }))}
-              placeholder="https://example.com/v1"
-            />
-          </label>
-          <label className="field-block">
-            <span>OpenAI 模型名（可选）</span>
-            <input
-              value={templateDraft.openaiModel}
-              onChange={(event) => setTemplateDraft((current) => ({ ...current, openaiModel: event.target.value }))}
-              placeholder="留空使用模型列表第一个"
-            />
-          </label>
-          <label className="field-block">
-            <span>Anthropic 协议地址</span>
-            <input
-              value={templateDraft.anthropicBaseUrl}
-              onChange={(event) => setTemplateDraft((current) => ({ ...current, anthropicBaseUrl: event.target.value }))}
-              placeholder="https://example.com/anthropic"
-            />
-          </label>
-          <label className="field-block">
-            <span>Anthropic 模型名（可选）</span>
-            <input
-              value={templateDraft.anthropicModel}
-              onChange={(event) => setTemplateDraft((current) => ({ ...current, anthropicModel: event.target.value }))}
-              placeholder="留空使用模型列表第一个"
-            />
-          </label>
-        </div>
-      ) : null}
-      <div className="toolbar">
-        <button type="button" onClick={() => void runValidation()} disabled={isRunning}>
-          {isRunning ? '校验中' : '开始校验'}
-        </button>
-        {isTemplateEditorOpen ? (
-          <button type="button" className="secondary" onClick={() => void saveTemplate()} disabled={isRunning}>
-            保存模板
+        <div className="toolbar llm-action-bar">
+          <button type="button" onClick={() => void runValidation()} disabled={isRunning}>
+            {isRunning ? '校验中' : '开始校验'}
           </button>
-        ) : (
           <button
             type="button"
             className="secondary"
             onClick={() => {
-              setIsTemplateEditorOpen(true);
-              setError('');
-            }}
-            disabled={isRunning}
-          >
-            添加模板
-          </button>
-        )}
-        {isTemplateEditorOpen ? (
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => {
-              setIsTemplateEditorOpen(false);
+              setIsTemplateEditorOpen((current) => !current);
               setTemplateDraft(EMPTY_TEMPLATE_DRAFT);
               setError('');
             }}
             disabled={isRunning}
+            aria-expanded={isTemplateEditorOpen}
           >
-            取消
+            {isTemplateEditorOpen ? '收起模板' : '添加模板'}
           </button>
-        ) : null}
-        <button type="button" className="secondary" onClick={clear} disabled={isRunning}>
-          清空
-        </button>
-      </div>
+          <button type="button" className="secondary" onClick={clear} disabled={isRunning}>
+            清空
+          </button>
+        </div>
+      </section>
+      {isTemplateEditorOpen ? (
+        <section className="llm-template-editor-panel" aria-label="添加模板">
+          <div className="llm-template-editor">
+            <label className="field-block llm-template-editor-name">
+              <span>模板名称</span>
+              <input
+                value={templateDraft.name}
+                onChange={(event) => setTemplateDraft((current) => ({ ...current, name: event.target.value }))}
+                placeholder="例如：公司网关"
+              />
+            </label>
+            <label className="field-block">
+              <span>OpenAI 协议地址</span>
+              <input
+                value={templateDraft.openaiBaseUrl}
+                onChange={(event) => setTemplateDraft((current) => ({ ...current, openaiBaseUrl: event.target.value }))}
+                placeholder="https://example.com/v1"
+              />
+            </label>
+            <label className="field-block">
+              <span>OpenAI 模型名（可选）</span>
+              <input
+                value={templateDraft.openaiModel}
+                onChange={(event) => setTemplateDraft((current) => ({ ...current, openaiModel: event.target.value }))}
+                placeholder="留空使用模型列表第一个"
+              />
+            </label>
+            <label className="field-block">
+              <span>Anthropic 协议地址</span>
+              <input
+                value={templateDraft.anthropicBaseUrl}
+                onChange={(event) => setTemplateDraft((current) => ({ ...current, anthropicBaseUrl: event.target.value }))}
+                placeholder="https://example.com/anthropic"
+              />
+            </label>
+            <label className="field-block">
+              <span>Anthropic 模型名（可选）</span>
+              <input
+                value={templateDraft.anthropicModel}
+                onChange={(event) => setTemplateDraft((current) => ({ ...current, anthropicModel: event.target.value }))}
+                placeholder="留空使用模型列表第一个"
+              />
+            </label>
+          </div>
+          <div className="toolbar llm-template-editor-actions">
+            <button type="button" onClick={() => void saveTemplate()} disabled={isRunning}>
+              保存模板
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setIsTemplateEditorOpen(false);
+                setTemplateDraft(EMPTY_TEMPLATE_DRAFT);
+                setError('');
+              }}
+              disabled={isRunning}
+            >
+              取消
+            </button>
+          </div>
+        </section>
+      ) : null}
       {error ? <div className="error-banner" role="alert">{error}</div> : null}
       {status ? <div className="status-message" role="status" aria-live="polite">{status}</div> : null}
       {results.map((item) => (
@@ -359,36 +362,46 @@ function ValidationResultsTable({
   baseUrl: string;
   results: LlmApiKeyValidationResult[];
 }): ReactElement {
+  const availableCount = results.filter((item) => item.status === 'available').length;
+
   return (
-    <div className="llm-results">
-      <table>
-        <caption>{protocolLabel(protocol)} 校验结果 · {baseUrl}</caption>
-        <thead>
-          <tr>
-            <th>API Key</th>
-            <th>模型</th>
-            <th>余额</th>
-            <th>对话</th>
-            <th>结论</th>
-            <th>错误摘要</th>
-          </tr>
-        </thead>
-        <tbody>
-          {results.map((item) => (
-            <tr key={`${item.maskedKey}-${item.selectedModel}`}>
-              <td>{item.maskedKey}</td>
-              <td>{stepText(item.modelList, item.selectedModel || '-')}</td>
-              <td>{stepText(item.balance)}</td>
-              <td>{stepText(item.chat)}</td>
-              <td>
-                <span className={`llm-status llm-status-${item.status}`}>{statusLabel(item.status)}</span>
-              </td>
-              <td>{item.errorSummary || '-'}</td>
+    <section className="llm-result-section" aria-label={`${protocolLabel(protocol)} 校验结果`}>
+      <header className="llm-result-heading">
+        <div>
+          <h2>{protocolLabel(protocol)}</h2>
+          <p>{baseUrl}</p>
+        </div>
+        <span>{availableCount}/{results.length} 可用</span>
+      </header>
+      <div className="llm-results">
+        <table>
+          <thead>
+            <tr>
+              <th>API Key</th>
+              <th>模型</th>
+              <th>余额</th>
+              <th>对话</th>
+              <th>结论</th>
+              <th>错误摘要</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {results.map((item) => (
+              <tr key={`${item.maskedKey}-${item.selectedModel}`}>
+                <td>{item.maskedKey}</td>
+                <td>{stepText(item.modelList, item.selectedModel || '-')}</td>
+                <td>{stepText(item.balance)}</td>
+                <td>{stepText(item.chat)}</td>
+                <td>
+                  <span className={`llm-status llm-status-${item.status}`}>{statusLabel(item.status)}</span>
+                </td>
+                <td>{item.errorSummary || '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 

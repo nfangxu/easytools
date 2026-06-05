@@ -26,6 +26,18 @@ describe('tool page layout styles', () => {
     expect(styles).toMatch(/\.tool-page-content\s*{[^}]*padding:\s*12px clamp\(18px, 4vw, 42px\) 24px/s);
   });
 
+  it('uses layered LLM API checker sections for configuration, templates, and results', () => {
+    const styles = readFileSync(join(process.cwd(), 'src/renderer/styles.css'), 'utf8');
+
+    expect(styles).toMatch(/\.llm-config-panel\s*{[^}]*display:\s*grid/s);
+    expect(styles).toMatch(/\.llm-template-row\s*{[^}]*grid-template-columns:\s*minmax\(180px, 260px\) minmax\(0, 1fr\)/s);
+    expect(styles).toMatch(/\.llm-template-summary\s*{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
+    expect(styles).toMatch(/\.llm-template-editor\s*{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/s);
+    expect(styles).toMatch(/\.llm-template-editor-name\s*{[^}]*grid-column:\s*1 \/ -1/s);
+    expect(styles).toMatch(/\.llm-result-section\s*{[^}]*display:\s*grid/s);
+    expect(styles).toMatch(/\.llm-result-heading\s*{[^}]*display:\s*flex/s);
+  });
+
   it('animates page switches and recent-run popovers with reduced-motion support', () => {
     const styles = readFileSync(join(process.cwd(), 'src/renderer/styles.css'), 'utf8');
 
