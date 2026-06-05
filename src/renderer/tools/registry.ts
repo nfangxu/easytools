@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 
 import { Base64Tool } from './base64/Base64Tool';
 import { JsonTool } from './json/JsonTool';
+import { JwtTool } from './jwt/JwtTool';
 import { LlmApiCheckerTool } from './llm-api/LlmApiCheckerTool';
 import { TimestampTool } from './timestamp/TimestampTool';
 
@@ -10,7 +11,7 @@ export interface ToolComponentProps {
 }
 
 export interface ToolDefinition {
-  id: 'json' | 'base64' | 'timestamp' | 'llm-api';
+  id: 'json' | 'base64' | 'jwt' | 'timestamp' | 'llm-api';
   name: string;
   category: '文本处理' | '时间日期' | 'AI 工具';
   component: ComponentType<ToolComponentProps>;
@@ -28,6 +29,12 @@ export const tools: ToolDefinition[] = [
     name: 'Base64 加解密',
     category: '文本处理',
     component: Base64Tool,
+  },
+  {
+    id: 'jwt',
+    name: 'JWT 校验解析',
+    category: '文本处理',
+    component: JwtTool,
   },
   {
     id: 'timestamp',

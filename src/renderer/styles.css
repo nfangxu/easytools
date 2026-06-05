@@ -600,6 +600,53 @@ select {
   min-height: 300px;
 }
 
+.jwt-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  gap: 16px;
+  align-items: start;
+}
+
+.jwt-token-field textarea {
+  min-height: 170px;
+}
+
+.jwt-output-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.jwt-output {
+  min-height: 260px;
+}
+
+.jwt-claims-panel {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  border-radius: 14px;
+  background: #fffdf8;
+  padding: 12px;
+  box-shadow: inset 0 0 0 1px #d9cfc1;
+}
+
+.jwt-claims-panel h2 {
+  margin: 0;
+  color: #344152;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.jwt-claims-panel ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 18px;
+  color: #62584b;
+  font-size: 13px;
+}
+
 .llm-config-panel {
   display: grid;
   gap: 12px;
@@ -909,10 +956,16 @@ select {
 
   .textarea-pair,
   .timestamp-grid,
+  .jwt-layout,
+  .jwt-output-grid,
   .llm-template-row,
   .llm-template-summary,
   .llm-template-editor {
     grid-template-columns: 1fr;
+  }
+
+  .jwt-claims-panel {
+    grid-column: auto;
   }
 
   .llm-template-editor-name {
