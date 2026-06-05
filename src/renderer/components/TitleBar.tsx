@@ -7,7 +7,10 @@ interface TitleBarProps {
 export function TitleBar({ title }: TitleBarProps): ReactElement {
   return (
     <header className="title-bar">
-      <div className="title-bar-title">{title}</div>
+      <div className="title-bar-brand">
+        <img src="/favicon.png" alt="" aria-hidden="true" />
+        <div className="title-bar-title">{title}</div>
+      </div>
       <div className="window-controls" aria-label="窗口控制">
         <button
           type="button"

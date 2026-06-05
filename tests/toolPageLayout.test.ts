@@ -3,6 +3,16 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 describe('tool page layout styles', () => {
+  it('uses the DevFlow dark technical design tokens from the Stitch spec', () => {
+    const styles = readFileSync(join(process.cwd(), 'src/renderer/styles.css'), 'utf8');
+
+    expect(styles).toMatch(/:root\s*{[^}]*--surface:\s*#051424/s);
+    expect(styles).toMatch(/:root\s*{[^}]*--surface-container:\s*#122131/s);
+    expect(styles).toMatch(/:root\s*{[^}]*--secondary:\s*#4edea3/s);
+    expect(styles).toMatch(/body\s*{[^}]*background:\s*#051424/s);
+    expect(styles).toMatch(/textarea,\s*input,\s*select\s*{[^}]*background:\s*#010f1f/s);
+  });
+
   it('keeps the tool action toolbar fixed while tool content scrolls internally', () => {
     const styles = readFileSync(join(process.cwd(), 'src/renderer/styles.css'), 'utf8');
 
@@ -22,7 +32,7 @@ describe('tool page layout styles', () => {
     expect(styles).toMatch(/\.tool-page-actions\s*{[^}]*display:\s*flex/s);
     expect(styles).toMatch(/\.tool-switcher-popover\s*{[^}]*position:\s*absolute/s);
     expect(styles).toMatch(/\.tool-switcher-list\s*{[^}]*grid-template-columns:\s*1fr/s);
-    expect(styles).toMatch(/\.tool-switcher-item-active\s*{[^}]*background:\s*#1f2a30/s);
+    expect(styles).toMatch(/\.tool-switcher-item-active\s*{[^}]*box-shadow:\s*inset 2px 0 0 var\(--secondary\)/s);
     expect(styles).toMatch(/\.tool-page-content\s*{[^}]*padding:\s*12px clamp\(18px, 4vw, 42px\) 24px/s);
   });
 

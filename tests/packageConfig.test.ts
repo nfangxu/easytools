@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 interface PackageJson {
@@ -7,20 +7,25 @@ interface PackageJson {
   scripts?: Record<string, string>;
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
-  build?: {
+    build?: {
     appId?: string;
     productName?: string;
+    icon?: string;
     directories?: { output?: string };
     files?: string[];
     extraMetadata?: { main?: string };
     npmRebuild?: boolean;
-    win?: { target?: string[] };
-    mac?: { target?: string[] };
+    win?: { target?: string[]; icon?: string };
+    mac?: { target?: string[]; icon?: string };
   };
 }
 
 function readPackageJson(): PackageJson {
   return JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')) as PackageJson;
+}
+
+function readIndexHtml(): string {
+  return readFileSync(join(process.cwd(), 'index.html'), 'utf8');
 }
 
 describe('package build config', () => {
@@ -48,11 +53,30 @@ describe('package build config', () => {
 
     expect(build?.appId).toBe('com.easytools.app');
     expect(build?.productName).toBe('EasyTools');
+    expect(build?.icon).toBe('build/icons/icon.png');
     expect(build?.directories?.output).toBe('dist');
     expect(build?.files).toEqual(['out/**', 'package.json']);
     expect(build?.extraMetadata?.main).toBe('out/main/index.js');
     expect(build?.npmRebuild).toBe(false);
     expect(build?.win?.target).toEqual(['nsis', 'zip']);
+    expect(build?.win?.icon).toBe('build/icons/icon.ico');
     expect(build?.mac?.target).toEqual(['dmg']);
+    expect(build?.mac?.icon).toBe('build/icons/icon.icns');
+  });
+
+  it('keeps generated app icon resources available for packaged builds', () => {
+    for (const iconFile of ['icon.png', 'icon.ico', 'icon.icns', 'favicon.png', 'apple-touch-icon.png']) {
+      expect(existsSync(join(process.cwd(), 'build/icons', iconFile))).toBe(true);
+    }
+
+    expect(existsSync(join(process.cwd(), 'public/favicon.png'))).toBe(true);
+    expect(existsSync(join(process.cwd(), 'public/apple-touch-icon.png'))).toBe(true);
+  });
+
+  it('links generated favicon resources from the renderer HTML entry', () => {
+    const indexHtml = readIndexHtml();
+
+    expect(indexHtml).toContain('<link rel="icon" type="image/png" href="/favicon.png" />');
+    expect(indexHtml).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />');
   });
 });
