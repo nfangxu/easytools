@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DevFlow - JWT Debugger</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#122131",
+                    "background": "#051424",
+                    "surface-variant": "#273647",
+                    "secondary-fixed": "#6ffbbe",
+                    "on-secondary-container": "#00311f",
+                    "on-primary": "#283044",
+                    "surface-dim": "#051424",
+                    "outline": "#909097",
+                    "inverse-surface": "#d4e4fa",
+                    "on-error-container": "#ffdad6",
+                    "primary-fixed": "#dae2fd",
+                    "tertiary-fixed-dim": "#7bd0ff",
+                    "surface-container-lowest": "#010f1f",
+                    "on-secondary-fixed-variant": "#005236",
+                    "on-surface": "#d4e4fa",
+                    "on-tertiary-fixed": "#001e2c",
+                    "outline-variant": "#45464d",
+                    "on-error": "#690005",
+                    "on-tertiary": "#00354a",
+                    "surface-container-highest": "#273647",
+                    "on-tertiary-fixed-variant": "#004c69",
+                    "inverse-on-surface": "#233143",
+                    "secondary-container": "#00a572",
+                    "on-primary-container": "#798098",
+                    "inverse-primary": "#565e74",
+                    "tertiary-container": "#001a27",
+                    "secondary": "#4edea3",
+                    "surface-bright": "#2c3a4c",
+                    "primary-fixed-dim": "#bec6e0",
+                    "on-background": "#d4e4fa",
+                    "surface-container-low": "#0d1c2d",
+                    "secondary-fixed-dim": "#4edea3",
+                    "error": "#ffb4ab",
+                    "on-surface-variant": "#c6c6cd",
+                    "on-tertiary-container": "#008abb",
+                    "surface": "#051424",
+                    "on-primary-fixed": "#131b2e",
+                    "on-secondary-fixed": "#002113",
+                    "primary-container": "#0f172a",
+                    "primary": "#bec6e0",
+                    "tertiary-fixed": "#c4e7ff",
+                    "on-secondary": "#003824",
+                    "surface-container-high": "#1c2b3c",
+                    "tertiary": "#7bd0ff",
+                    "error-container": "#93000a",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "surface-tint": "#bec6e0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "container-gap": "24px",
+                    "sidebar-width": "240px",
+                    "padding-tight": "8px",
+                    "padding-standard": "16px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "label-caps": ["JetBrains Mono"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "title-sm": ["Hanken Grotesk"],
+                    "code-block": ["JetBrains Mono"],
+                    "body-md": ["Hanken Grotesk"],
+                    "display-lg": ["Hanken Grotesk"],
+                    "body-sm": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "code-block": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #051424;
+            color: #d4e4fa;
+            overflow-x: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .token-header { color: #fb7185; }
+        .token-payload { color: #c084fc; }
+        .token-signature { color: #4edea3; }
+        
+        .syntax-key { color: #7bd0ff; }
+        .syntax-string { color: #4edea3; }
+        .syntax-number { color: #dae2fd; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #010f1f; }
+        ::-webkit-scrollbar-thumb { background: #273647; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #45464d; }
+
+        /* Electron Specific Styles */
+        .titlebar {
+            -webkit-app-region: drag;
+            user-select: none;
+        }
+        .window-controls button {
+            -webkit-app-region: no-drag;
+        }
+        .sidebar-glass {
+            background-color: rgba(13, 28, 45, 0.85);
+            backdrop-filter: blur(12px);
+        }
+        .nav-item-active {
+            background: linear-gradient(90deg, rgba(78, 222, 163, 0.15) 0%, rgba(78, 222, 163, 0) 100%);
+            box-shadow: inset 2px 0 0 0 #4edea3;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md">
+<!-- Custom Electron Title Bar -->
+<div class="titlebar fixed top-0 left-0 right-0 h-10 bg-surface-container-lowest border-b border-outline-variant flex items-center justify-between px-4 z-[100]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-xl">bolt</span>
+<span class="font-label-caps text-label-caps text-on-surface opacity-80 uppercase">DevFlow</span>
+</div>
+<div class="window-controls flex items-center h-full">
+<button class="w-10 h-10 flex items-center justify-center hover:bg-surface-variant transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">minimize</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center hover:bg-surface-variant transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">check_box_outline_blank</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+<!-- SideNavBar -->
+<aside class="sidebar-glass fixed h-screen w-sidebar-width left-0 top-0 border-r border-outline-variant flex flex-col pt-14 pb-padding-standard z-50">
+<div class="px-6 mb-8">
+<h1 class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight">DevFlow</h1>
+<p class="text-on-surface-variant font-body-sm text-body-sm opacity-60">v1.0.4 Desktop</p>
+</div>
+<nav class="flex-grow space-y-1">
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">schedule</span>
+<span class="font-body-md text-body-md">Timestamp Converter</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">data_object</span>
+<span class="font-body-md text-body-md">Base64 Encoder</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">fingerprint</span>
+<span class="font-body-md text-body-md">MD5 Hasher</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-2.5 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">link</span>
+<span class="font-body-md text-body-md">URL Encoder</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-2.5 text-secondary nav-item-active cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px] fill-1">security</span>
+<span class="font-body-md text-body-md font-semibold">JWT Debugger</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant/30 pt-4">
+<a class="flex items-center gap-3 px-6 py-2 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-2 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span class="font-body-md text-body-md">Docs</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar (Sub-Header) -->
+<header class="fixed top-10 right-0 left-sidebar-width h-14 bg-surface/80 backdrop-blur-sm border-b border-outline-variant flex justify-between items-center px-gutter z-40">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md text-primary">JWT Debugger</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-3 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-1.5 text-on-surface-variant hover:bg-surface-variant transition-all group w-64">
+<span class="material-symbols-outlined text-[18px]">search</span>
+<span class="text-body-sm flex-grow text-left">Search tools...</span>
+<span class="text-[10px] bg-surface-variant px-1.5 py-0.5 rounded border border-outline-variant group-hover:bg-outline-variant transition-colors">⌘ K</span>
+</button>
+<div class="h-6 w-[1px] bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-3 text-on-surface-variant">
+<button class="hover:text-primary transition-colors material-symbols-outlined text-[20px]">notifications</button>
+<button class="hover:text-primary transition-colors material-symbols-outlined text-[20px]">account_circle</button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-sidebar-width mt-24 p-container-gap min-h-[calc(100vh-96px)]">
+<div class="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-container-gap">
+<!-- Left Column: Encoded -->
+<section class="lg:col-span-5 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Encoded</h2>
+<div class="flex gap-2">
+<button class="p-1 hover:bg-surface-variant rounded transition-colors" title="Paste from clipboard">
+<span class="material-symbols-outlined text-[18px]">content_paste</span>
+</button>
+<button class="p-1 hover:bg-surface-variant rounded transition-colors" title="Clear">
+<span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+</button>
+</div>
+</div>
+<div class="flex-grow bg-surface-container border border-outline-variant rounded-lg p-4 font-code-block text-code-block overflow-hidden relative group">
+<div class="w-full h-full min-h-[400px] outline-none break-all whitespace-pre-wrap leading-relaxed overflow-y-auto" contenteditable="true" id="jwt-input">
+<span class="token-header">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9</span>.<span class="token-payload">eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoyNTE2MjM5MDIyfQ</span>.<span class="token-signature">SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</span>
+</div>
+<div class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="bg-secondary text-on-secondary-container px-4 py-2 rounded font-label-caps text-label-caps flex items-center gap-2 shadow-lg active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+                            DECODE
+                        </button>
+</div>
+</div>
+</section>
+<!-- Right Column: Decoded -->
+<section class="lg:col-span-7 flex flex-col gap-6">
+<!-- Header Section -->
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Decoded: Header</h2>
+<button class="p-1 hover:bg-surface-variant rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 font-code-block text-code-block leading-relaxed">
+<pre><span class="syntax-key">"alg"</span>: <span class="syntax-string">"HS256"</span>,
+<span class="syntax-key">"typ"</span>: <span class="syntax-string">"JWT"</span></pre>
+</div>
+</div>
+<!-- Payload Section -->
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Decoded: Payload</h2>
+<button class="p-1 hover:bg-surface-variant rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 font-code-block text-code-block leading-relaxed">
+<pre><span class="syntax-key">"sub"</span>: <span class="syntax-string">"1234567890"</span>,
+<span class="syntax-key">"name"</span>: <span class="syntax-string">"John Doe"</span>,
+<span class="syntax-key">"iat"</span>: <span class="syntax-number">1516239022</span>,
+<span class="syntax-key">"admin"</span>: <span class="syntax-string">true</span>,
+<span class="syntax-key">"roles"</span>: [
+    <span class="syntax-string">"developer"</span>,
+    <span class="syntax-string">"maintainer"</span>
+]</pre>
+</div>
+</div>
+<!-- Verify Signature Section -->
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-6 space-y-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">verified_user</span>
+<h2 class="font-title-sm text-title-sm text-on-surface">Verify Signature</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">SECRET OR PUBLIC KEY</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded py-2 px-3 font-code-block text-code-block focus:border-secondary outline-none transition-colors" type="password" value="your-256-bit-secret"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</div>
+<div class="flex items-end">
+<div class="flex items-center gap-3 bg-secondary/10 border border-secondary/20 rounded py-2 px-4 w-full">
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-secondary">Signature Verified</span>
+</div>
+</div>
+</div>
+<div class="pt-2">
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative w-10 h-5 bg-surface-variant rounded-full transition-colors group-hover:bg-outline">
+<div class="absolute left-1 top-1 w-3 h-3 bg-on-surface-variant rounded-full transition-all"></div>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Secret base64 encoded</span>
+</label>
+</div>
+</div>
+</section>
+</div>
+<!-- Bento Utility Grid -->
+<div class="max-w-[1400px] mx-auto mt-12 grid grid-cols-1 md:grid-cols-3 gap-container-gap">
+<div class="bg-surface-container-low border border-outline-variant p-6 rounded-lg hover:border-secondary/50 transition-all duration-300">
+<span class="material-symbols-outlined text-tertiary mb-4">info</span>
+<h3 class="font-title-sm text-title-sm text-on-surface mb-2">Algorithm Support</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Full support for HS256, HS384, HS512, RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384.</p>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-6 rounded-lg hover:border-secondary/50 transition-all duration-300">
+<span class="material-symbols-outlined text-secondary mb-4">history</span>
+<h3 class="font-title-sm text-title-sm text-on-surface mb-2">Local History</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Your debugging session is saved locally in your browser. No tokens are sent to our servers for processing.</p>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-6 rounded-lg hover:border-secondary/50 transition-all duration-300">
+<span class="material-symbols-outlined text-primary mb-4">terminal</span>
+<h3 class="font-title-sm text-title-sm text-on-surface mb-2">CLI Integration</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Use DevFlow CLI for automated token validation in your CI/CD pipelines and local environment.</p>
+</div>
+</div>
+</main>
+<!-- Decorative Background Element -->
+<div class="fixed inset-0 pointer-events-none opacity-[0.03] z-[-1]">
+<div class="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-secondary rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-primary rounded-full blur-[120px]"></div>
+</div>
+<script>
+        // Micro-interaction for JWT input parsing visualization
+        const jwtInput = document.getElementById('jwt-input');
+        
+        jwtInput.addEventListener('input', () => {
+            const text = jwtInput.innerText;
+            const parts = text.split('.');
+            
+            if (parts.length === 3) {
+                // Simplified visualization for prototype
+                const header = `<span class="token-header">${parts[0]}</span>`;
+                const payload = `<span class="token-payload">${parts[1]}</span>`;
+                const signature = `<span class="token-signature">${parts[2]}</span>`;
+                jwtInput.innerHTML = `${header}.${payload}.${signature}`;
+                
+                const range = document.createRange();
+                const sel = window.getSelection();
+                range.selectNodeContents(jwtInput);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        });
+
+        // Toggle Switch Animation
+        const toggle = document.querySelector('.w-10.h-5');
+        const dot = toggle.querySelector('div');
+        let active = false;
+        
+        toggle.parentElement.addEventListener('click', () => {
+            active = !active;
+            if (active) {
+                toggle.classList.replace('bg-surface-variant', 'bg-secondary');
+                dot.classList.replace('left-1', 'left-6');
+                dot.classList.replace('bg-on-surface-variant', 'bg-on-secondary-container');
+            } else {
+                toggle.classList.replace('bg-secondary', 'bg-surface-variant');
+                dot.classList.replace('left-6', 'left-1');
+                dot.classList.replace('bg-on-secondary-container', 'bg-on-surface-variant');
+            }
+        });
+
+        // Search shortcut simulation
+        window.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                alert('Search Palette Opened');
+            }
+        });
+    </script>
+</body></html>

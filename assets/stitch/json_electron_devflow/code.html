@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DevFlow - JSON Formatter</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Electron Titlebar Dragging */
+        .titlebar {
+            -webkit-app-region: drag;
+        }
+        .titlebar-button {
+            -webkit-app-region: no-drag;
+        }
+        .code-editor::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .code-editor::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        .code-editor::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        .code-editor::-webkit-scrollbar-thumb:hover {
+            background: #45464d;
+        }
+        .syntax-key { color: #7bd0ff; }
+        .syntax-string { color: #4edea3; }
+        .syntax-number { color: #ffa06a; }
+        .syntax-boolean { color: #bec6e0; }
+        .syntax-null { color: #909097; }
+
+        /* Sidebar Translucency */
+        .sidebar-blur {
+            backdrop-filter: blur(12px);
+            background-color: rgba(1, 15, 31, 0.8);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ffb4ab",
+                        "on-primary-container": "#798098",
+                        "on-primary": "#283044",
+                        "outline": "#909097",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-tertiary": "#00354a",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-tertiary-fixed": "#001e2c",
+                        "surface-variant": "#273647",
+                        "primary-container": "#0f172a",
+                        "on-background": "#d4e4fa",
+                        "on-secondary": "#003824",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "on-error": "#690005",
+                        "background": "#051424",
+                        "on-secondary-container": "#00311f",
+                        "on-error-container": "#ffdad6",
+                        "secondary": "#4edea3",
+                        "tertiary": "#7bd0ff",
+                        "tertiary-fixed-dim": "#7bd0ff",
+                        "secondary-fixed": "#6ffbbe",
+                        "surface-container": "#122131",
+                        "on-tertiary-container": "#008abb",
+                        "primary": "#bec6e0",
+                        "on-primary-fixed": "#131b2e",
+                        "secondary-container": "#00a572",
+                        "surface-container-lowest": "#010f1f",
+                        "surface-bright": "#2c3a4c",
+                        "primary-fixed": "#dae2fd",
+                        "outline-variant": "#45464d",
+                        "inverse-on-surface": "#233143",
+                        "inverse-surface": "#d4e4fa",
+                        "tertiary-container": "#001a27",
+                        "on-secondary-fixed": "#002113",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#004c69",
+                        "surface-dim": "#051424",
+                        "on-surface": "#d4e4fa",
+                        "tertiary-fixed": "#c4e7ff",
+                        "surface-container-low": "#0d1c2d",
+                        "inverse-primary": "#565e74",
+                        "on-surface-variant": "#c6c6cd",
+                        "surface-container-high": "#1c2b3c",
+                        "surface-container-highest": "#273647",
+                        "surface-tint": "#bec6e0",
+                        "on-secondary-fixed-variant": "#005236",
+                        "surface": "#051424"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "padding-standard": "16px",
+                        "sidebar-width": "260px",
+                        "gutter": "16px",
+                        "padding-tight": "8px",
+                        "container-gap": "24px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "title-sm": ["Hanken Grotesk"],
+                        "display-lg": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "label-caps": ["JetBrains Mono"],
+                        "code-block": ["JetBrains Mono"],
+                        "body-sm": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "code-block": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-secondary/30 h-screen flex flex-col overflow-hidden">
+<!-- Electron Custom Title Bar -->
+<header class="titlebar h-10 w-full flex items-center justify-between px-4 bg-surface-container-lowest border-b border-outline-variant/30 flex-shrink-0 z-[60]">
+<div class="flex items-center gap-2">
+<div class="w-5 h-5 bg-secondary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-on-secondary font-bold">code</span>
+</div>
+<span class="font-display-lg text-[13px] font-bold text-on-surface-variant tracking-tight">DevFlow</span>
+</div>
+<div class="flex items-center gap-1 titlebar-button">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/20 transition-colors">
+<span class="material-symbols-outlined text-[18px]">minimize</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-variant/20 transition-colors">
+<span class="material-symbols-outlined text-[16px]">crop_square</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-error/20 hover:text-error transition-colors">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar Shell -->
+<aside class="w-sidebar-width h-full sidebar-blur border-r border-outline-variant/30 flex flex-col py-padding-standard z-50 flex-shrink-0">
+<nav class="flex-1 space-y-1 px-3">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant/10 rounded-lg transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-[20px] opacity-70 group-hover:opacity-100">schedule</span>
+<span class="font-body-md">Timestamp</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant/10 rounded-lg transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-[20px] opacity-70 group-hover:opacity-100">transform</span>
+<span class="font-body-md">Transformers</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant/10 rounded-lg transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-[20px] opacity-70 group-hover:opacity-100">fingerprint</span>
+<span class="font-body-md">Hashers</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant/10 rounded-lg transition-colors cursor-pointer group" href="#">
+<span class="material-symbols-outlined text-[20px] opacity-70 group-hover:opacity-100">security</span>
+<span class="font-body-md">JWT Debugger</span>
+</a>
+<!-- Active State: JSON Formatter -->
+<a class="flex items-center gap-3 px-3 py-2 text-secondary bg-secondary/10 rounded-lg cursor-pointer transition-all border border-secondary/20 shadow-sm shadow-secondary/5" href="#">
+<span class="material-symbols-outlined text-[20px] fill-1">code</span>
+<span class="font-body-md font-semibold">JSON Formatter</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant/20 pt-4 px-3 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant/10 rounded-lg transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px] opacity-70">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant/10 rounded-lg transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px] opacity-70">help</span>
+<span class="font-body-md">Support</span>
+</a>
+</div>
+</aside>
+<!-- Content Area -->
+<div class="flex-1 flex flex-col overflow-hidden">
+<!-- TopAppBar -->
+<header class="h-14 bg-surface border-b border-outline-variant/30 flex items-center justify-between px-gutter flex-shrink-0">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-md text-title-sm font-bold text-on-surface">JSON 格式化</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group cursor-pointer" onclick="openCommandPalette()">
+<span class="absolute inset-y-0 left-3 flex items-center text-on-surface-variant/50">
+<span class="material-symbols-outlined text-[18px]">search</span>
+</span>
+<div class="bg-surface-container-low border border-outline-variant/50 rounded-md pl-10 pr-3 py-1.5 text-body-sm text-on-surface-variant/60 flex items-center gap-8 hover:border-primary/50 transition-all w-[240px]">
+<span>Search tools...</span>
+<span class="text-[10px] bg-surface-container-highest px-1.5 py-0.5 rounded border border-outline-variant/30 font-code-block ml-auto">⌘ K</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<button class="w-8 h-8 rounded-full hover:bg-surface-variant/20 flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<div class="w-px h-4 bg-outline-variant/30 mx-1"></div>
+<button class="w-8 h-8 rounded-full hover:bg-surface-variant/20 flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[20px]">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col p-container-gap bg-background overflow-hidden">
+<!-- Toolbar Section -->
+<section class="flex items-center justify-between mb-container-gap bg-surface-container-low/50 p-2.5 rounded-lg border border-outline-variant/10 flex-shrink-0">
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 bg-secondary-container text-on-secondary-container font-label-caps rounded flex items-center gap-2 hover:opacity-90 transition-all active:scale-95" onclick="formatJSON(2)">
+<span class="material-symbols-outlined text-[16px]">format_align_left</span>
+                        BEAUTIFY (2)
+                    </button>
+<button class="px-3 py-1.5 bg-surface-container-highest text-on-surface font-label-caps rounded border border-outline-variant flex items-center gap-2 hover:bg-surface-variant transition-all active:scale-95" onclick="formatJSON(4)">
+<span class="material-symbols-outlined text-[16px]">format_indent_increase</span>
+                        BEAUTIFY (4)
+                    </button>
+<button class="px-3 py-1.5 bg-surface-container-highest text-on-surface font-label-caps rounded border border-outline-variant flex items-center gap-2 hover:bg-surface-variant transition-all active:scale-95" onclick="minifyJSON()">
+<span class="material-symbols-outlined text-[16px]">compress</span>
+                        MINIFY
+                    </button>
+<div class="w-px h-5 bg-outline-variant/50 mx-1"></div>
+<button class="px-3 py-1.5 text-tertiary font-label-caps hover:bg-tertiary/10 rounded transition-all flex items-center gap-2" onclick="validateJSON()">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+                        VALIDATE
+                    </button>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 text-error font-label-caps hover:bg-error/10 rounded transition-all flex items-center gap-2" onclick="clearEditor()">
+<span class="material-symbols-outlined text-[16px]">delete_sweep</span>
+                        CLEAR
+                    </button>
+</div>
+</section>
+<!-- Editor Grid -->
+<section class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-container-gap min-h-0 overflow-hidden">
+<!-- Input Panel -->
+<div class="flex flex-col rounded-xl overflow-hidden border border-outline-variant bg-surface-container-lowest h-full">
+<div class="bg-surface-container-high px-4 py-2 flex items-center justify-between border-b border-outline-variant flex-shrink-0">
+<span class="font-label-caps text-on-surface-variant uppercase text-[10px]">Input Raw JSON</span>
+<span class="text-on-surface-variant/40 font-code-block text-[10px]">READ/WRITE</span>
+</div>
+<textarea class="flex-1 w-full bg-[#020617] p-4 font-code-block text-code-block text-primary-fixed-dim resize-none border-none focus:ring-0 code-editor" id="jsonInput" placeholder="Paste or type your JSON here..."></textarea>
+</div>
+<!-- Output Panel -->
+<div class="flex flex-col rounded-xl overflow-hidden border border-outline-variant bg-surface-container-lowest relative h-full">
+<div class="bg-surface-container-high px-4 py-2 flex items-center justify-between border-b border-outline-variant flex-shrink-0">
+<span class="font-label-caps text-on-surface-variant uppercase text-[10px]">Formatted Output</span>
+<button class="flex items-center gap-1.5 text-secondary hover:text-secondary-fixed transition-colors" onclick="copyToClipboard()">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+<span class="font-label-caps text-[10px]">COPY</span>
+</button>
+</div>
+<div class="flex-1 bg-[#020617] p-4 font-code-block text-code-block overflow-auto code-editor" id="jsonOutput">
+<pre class="whitespace-pre-wrap"><span class="syntax-null">// Your formatted JSON will appear here...</span></pre>
+</div>
+<!-- Visual feedback toast (hidden) -->
+<div class="absolute bottom-6 right-6 px-4 py-2 bg-secondary text-on-secondary font-label-caps rounded shadow-2xl opacity-0 transition-opacity pointer-events-none z-10" id="copyToast">
+                        COPIED!
+                    </div>
+</div>
+</section>
+<!-- Status Bar -->
+<footer class="mt-container-gap h-10 bg-surface-container flex items-center justify-between px-4 rounded border border-outline-variant/20 text-on-surface-variant font-body-sm flex-shrink-0">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-[9px] opacity-60">STATUS:</span>
+<span class="flex items-center gap-1.5 text-outline text-[11px]" id="statusIndicator">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                            READY
+                        </span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-[9px] opacity-60">CHARACTERS:</span>
+<span class="text-on-surface text-[11px]" id="charCount">0</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-[9px] opacity-60">INDENT:</span>
+<span class="text-on-surface text-[11px]" id="indentType">NONE</span>
+</div>
+<div class="w-px h-3 bg-outline-variant/30"></div>
+<span class="font-label-caps text-[9px] opacity-60">UTF-8</span>
+</div>
+</footer>
+</main>
+</div>
+</div>
+<script>
+    const inputArea = document.getElementById('jsonInput');
+    const outputArea = document.getElementById('jsonOutput');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const charCount = document.getElementById('charCount');
+    const indentTypeDisplay = document.getElementById('indentType');
+
+    // Initial Example
+    const exampleData = {
+        "name": "DevFlow Toolset",
+        "version": "1.2.0",
+        "status": "operational",
+        "features": ["formatting", "validation", "minification"],
+        "debug": true,
+        "metadata": null
+    };
+
+    function updateStatusBar(status, colorClass, bulbColor, charNum, indent) {
+        statusIndicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${bulbColor}"></span> ${status}`;
+        statusIndicator.className = `flex items-center gap-1.5 ${colorClass} text-[11px]`;
+        charCount.textContent = charNum;
+        indentTypeDisplay.textContent = indent;
+    }
+
+    function highlightJSON(json) {
+        if (typeof json !== 'string') {
+            json = JSON.stringify(json, undefined, 2);
+        }
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            let cls = 'syntax-number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'syntax-key';
+                } else {
+                    cls = 'syntax-string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'syntax-boolean';
+            } else if (/null/.test(match)) {
+                cls = 'syntax-null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+
+    function formatJSON(spaces) {
+        try {
+            const val = inputArea.value.trim();
+            if (!val) return;
+            const obj = JSON.parse(val);
+            const formatted = JSON.stringify(obj, null, spaces);
+            outputArea.innerHTML = `<pre class="whitespace-pre-wrap">${highlightJSON(formatted)}</pre>`;
+            updateStatusBar('VALID JSON', 'text-secondary', 'bg-secondary', val.length, `SPACES: ${spaces}`);
+        } catch (e) {
+            updateStatusBar('INVALID JSON', 'text-error', 'bg-error', inputArea.value.length, 'ERROR');
+            outputArea.innerHTML = `<pre class="text-error whitespace-pre-wrap">Error: ${e.message}</pre>`;
+        }
+    }
+
+    function minifyJSON() {
+        try {
+            const val = inputArea.value.trim();
+            if (!val) return;
+            const obj = JSON.parse(val);
+            const minified = JSON.stringify(obj);
+            outputArea.innerHTML = `<pre class="whitespace-pre-wrap">${highlightJSON(minified)}</pre>`;
+            updateStatusBar('VALID JSON', 'text-secondary', 'bg-secondary', val.length, 'MINIFIED');
+        } catch (e) {
+            updateStatusBar('INVALID JSON', 'text-error', 'bg-error', inputArea.value.length, 'ERROR');
+            outputArea.innerHTML = `<pre class="text-error whitespace-pre-wrap">Error: ${e.message}</pre>`;
+        }
+    }
+
+    function validateJSON() {
+        try {
+            const val = inputArea.value.trim();
+            if (!val) return;
+            JSON.parse(val);
+            updateStatusBar('VALID JSON', 'text-secondary', 'bg-secondary', val.length, 'VALIDATED');
+            outputArea.innerHTML = `<pre class="text-secondary whitespace-pre-wrap">✓ JSON is valid and well-formed.</pre>`;
+        } catch (e) {
+            updateStatusBar('INVALID JSON', 'text-error', 'bg-error', inputArea.value.length, 'ERROR');
+            outputArea.innerHTML = `<pre class="text-error whitespace-pre-wrap">JSON Syntax Error:\n${e.message}</pre>`;
+        }
+    }
+
+    function clearEditor() {
+        inputArea.value = '';
+        outputArea.innerHTML = '<pre class="whitespace-pre-wrap"><span class="syntax-null">// Your formatted JSON will appear here...</span></pre>';
+        updateStatusBar('READY', 'text-outline', 'bg-outline', 0, 'NONE');
+    }
+
+    function copyToClipboard() {
+        const text = outputArea.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const toast = document.getElementById('copyToast');
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 2000);
+        });
+    }
+
+    function openCommandPalette() {
+        console.log("Opening command palette (Mock)...");
+        // Implementation for Electron command palette would go here
+    }
+
+    // Load Example on startup
+    window.onload = () => {
+        const str = JSON.stringify(exampleData, null, 2);
+        inputArea.value = str;
+        outputArea.innerHTML = `<pre class="whitespace-pre-wrap">${highlightJSON(str)}</pre>`;
+        updateStatusBar('READY', 'text-outline', 'bg-outline', str.length, 'SPACES: 2');
+    };
+
+    // Real-time character count
+    inputArea.addEventListener('input', (e) => {
+        charCount.textContent = e.target.value.length;
+    });
+
+    // Handle Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            openCommandPalette();
+        }
+    });
+</script>
+</body></html>
