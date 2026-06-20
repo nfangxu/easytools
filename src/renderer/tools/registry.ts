@@ -13,39 +13,39 @@ export interface ToolComponentProps {
 export interface ToolDefinition {
   id: 'json' | 'base64' | 'jwt' | 'timestamp' | 'llm-api';
   name: string;
-  category: '文本处理' | '时间日期' | 'AI 工具';
+  category: 'Text' | 'Date' | 'AI';
   component: ComponentType<ToolComponentProps>;
 }
 
 export const tools: ToolDefinition[] = [
   {
-    id: 'json',
-    name: 'JSON 格式化',
-    category: '文本处理',
-    component: JsonTool,
-  },
-  {
-    id: 'base64',
-    name: 'Base64 加解密',
-    category: '文本处理',
-    component: Base64Tool,
-  },
-  {
-    id: 'jwt',
-    name: 'JWT 校验解析',
-    category: '文本处理',
-    component: JwtTool,
-  },
-  {
     id: 'timestamp',
-    name: '时间戳转换',
-    category: '时间日期',
+    name: 'Timestamp Converter',
+    category: 'Date',
     component: TimestampTool,
   },
   {
+    id: 'base64',
+    name: 'Base64 Encoder',
+    category: 'Text',
+    component: Base64Tool,
+  },
+  {
+    id: 'json',
+    name: 'JSON Formatter',
+    category: 'Text',
+    component: JsonTool,
+  },
+  {
+    id: 'jwt',
+    name: 'JWT Debugger',
+    category: 'Text',
+    component: JwtTool,
+  },
+  {
     id: 'llm-api',
-    name: '大模型 API 校验',
-    category: 'AI 工具',
+    name: 'LLM API Checker',
+    category: 'AI',
     component: LlmApiCheckerTool,
   },
 ];
