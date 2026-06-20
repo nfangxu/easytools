@@ -984,6 +984,173 @@ button.active:hover:not(:disabled) {
   gap: 12px;
 }
 
+/* -------- Identity generator ------------------------------------------- */
+
+.identity-config-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--shell-rise);
+  border: 1px solid var(--shell-edge);
+  border-radius: 2px;
+}
+
+.identity-filter-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.identity-filter-label {
+  padding-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--on-shell-mute);
+}
+
+.identity-filter-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.identity-filter-grid-region {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.identity-filter-grid-birth {
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(0, 2fr);
+  align-items: center;
+}
+
+.identity-filter-grid-count {
+  grid-template-columns: 120px auto;
+  align-items: center;
+}
+
+.identity-config-panel select,
+.identity-config-panel input[type='date'],
+.identity-config-panel input[type='number'] {
+  height: 36px;
+  padding: 0 12px;
+  background: var(--bone);
+  color: var(--ink);
+  border: 1px solid var(--shell-edge);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  outline: none;
+}
+
+.identity-config-panel select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.identity-config-panel select:focus,
+.identity-config-panel input:focus {
+  border-color: var(--signal);
+}
+
+.identity-date-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.identity-date-field > span {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--on-shell-mute);
+}
+
+.identity-date-field > input {
+  flex: 1;
+  min-width: 0;
+}
+
+.identity-filter-help {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  color: var(--on-shell-dim);
+}
+
+.identity-gender-switch {
+  width: max-content;
+}
+
+.identity-count-input {
+  text-align: right;
+  font-feature-settings: 'tnum';
+}
+
+.identity-empty {
+  margin: 0;
+  padding: 24px 20px;
+  background: var(--shell-rise);
+  border: 1px dashed var(--shell-edge);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--on-shell-dim);
+  text-align: center;
+}
+
+.identity-result-section {
+  background: var(--shell-rise);
+}
+
+.identity-table .identity-col-index {
+  width: 36px;
+  text-align: right;
+  color: var(--on-shell-dim);
+  font-feature-settings: 'tnum';
+}
+
+.identity-table .identity-col-gender {
+  width: 60px;
+  text-align: center;
+}
+
+.identity-table .identity-col-id {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum';
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.identity-table .identity-col-action {
+  width: 48px;
+  text-align: center;
+}
+
+.identity-table .identity-col-action button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--on-shell-mute);
+  padding: 4px;
+  width: 28px;
+  height: 28px;
+  min-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.identity-table .identity-col-action button:hover:not(:disabled) {
+  background: var(--shell-high);
+  border-color: var(--shell-edge-soft);
+  color: var(--signal);
+}
+
 /* -------- Toolbar (legacy slot, still used by JSON / JWT / Timestamp / LLM
    for in-body action rows) ------------------------------------------------- */
 

@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 
 import { Base64Tool } from './base64/Base64Tool';
+import { IdentityTool } from './identity/IdentityTool';
 import { JsonTool } from './json/JsonTool';
 import { JwtTool } from './jwt/JwtTool';
 import { LlmApiCheckerTool } from './llm-api/LlmApiCheckerTool';
@@ -11,9 +12,9 @@ export interface ToolComponentProps {
 }
 
 export interface ToolDefinition {
-  id: 'json' | 'base64' | 'jwt' | 'timestamp' | 'llm-api';
+  id: 'json' | 'base64' | 'jwt' | 'timestamp' | 'llm-api' | 'identity';
   name: string;
-  category: 'Text' | 'Date' | 'AI';
+  category: 'Text' | 'Date' | 'AI' | 'Data';
   component: ComponentType<ToolComponentProps>;
 }
 
@@ -47,5 +48,11 @@ export const tools: ToolDefinition[] = [
     name: 'LLM API Checker',
     category: 'AI',
     component: LlmApiCheckerTool,
+  },
+  {
+    id: 'identity',
+    name: 'Identity Generator',
+    category: 'Data',
+    component: IdentityTool,
   },
 ];

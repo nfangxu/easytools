@@ -16,6 +16,7 @@ describe('tool registry', () => {
       { id: 'json', name: 'JSON Formatter', category: 'Text' },
       { id: 'jwt', name: 'JWT Debugger', category: 'Text' },
       { id: 'llm-api', name: 'LLM API Checker', category: 'AI' },
+      { id: 'identity', name: 'Identity Generator', category: 'Data' },
     ]);
   });
 });

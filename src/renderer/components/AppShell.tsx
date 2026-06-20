@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react';
-import { Bell, Settings, FileText, Clock, Hash, Shield, Code, ArrowRightLeft, Search, User } from 'lucide-react';
+import {
+  Bell,
+  Settings,
+  FileText,
+  Clock,
+  Hash,
+  Shield,
+  Code,
+  ArrowRightLeft,
+  Search,
+  User,
+  IdCard,
+  Cpu,
+} from 'lucide-react';
 
 import type { RecentRun } from '../../shared/types';
 import { useI18n } from '../i18n/I18nProvider';
@@ -21,6 +34,7 @@ const TOOL_NAME_KEYS: Record<ToolId, TranslationKey> = {
   json: 'tool.json.name',
   jwt: 'tool.jwt.name',
   'llm-api': 'tool.llm.name',
+  identity: 'tool.identity.name',
 };
 
 export function toolNameKey(toolId: ToolId): TranslationKey {
@@ -35,6 +49,8 @@ function getToolIcon(toolId: string) {
     url: <ArrowRightLeft size={18} />,
     jwt: <Shield size={18} />,
     json: <FileText size={18} />,
+    'llm-api': <Cpu size={18} />,
+    identity: <IdCard size={18} />,
   };
   return iconMap[toolId] || <Code size={18} />;
 }
