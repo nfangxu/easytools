@@ -1,4 +1,7 @@
-import type { ReactElement } from 'react';
+import { Copy } from 'lucide-react';
+import { useState, type ReactElement } from 'react';
+
+import { useI18n } from '../i18n/I18nProvider';
 
 interface TextAreaPairProps {
   inputLabel: string;
@@ -9,6 +12,7 @@ interface TextAreaPairProps {
   inputPlaceholder?: string;
   outputPlaceholder?: string;
   outputReadOnly?: boolean;
+  showCopyButton?: boolean;
 }
 
 export function TextAreaPair({
@@ -20,11 +24,28 @@ export function TextAreaPair({
   inputPlaceholder,
   outputPlaceholder,
   outputReadOnly = true,
+  showCopyButton = true,
 }: TextAreaPairProps): ReactElement {
+  const { t } = useI18n();
+  const [, setCopySuccess] = useState(false);
+
+  async function copyOutput(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(outputValue);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 1500);
+    } catch {
+      // Silently fail
+    }
+  }
+
   return (
     <div className="textarea-pair">
-      <label className="field-block">
-        <span>{inputLabel}</span>
+      <div className="field-block">
+        <div className="field-header">
+          <span className="field-title">{inputLabel}</span>
+          <span className="field-meta">{inputValue.length} ch</span>
+        </div>
         <textarea
           value={inputValue}
           onChange={(event) => {
@@ -33,16 +54,29 @@ export function TextAreaPair({
           placeholder={inputPlaceholder}
           spellCheck={false}
         />
-      </label>
-      <label className="field-block">
-        <span>{outputLabel}</span>
+      </div>
+      <div className="field-block">
+        <div className="field-header">
+          <span className="field-title">{outputLabel}</span>
+          {showCopyButton && outputValue ? (
+            <button
+              type="button"
+              className="field-copy-btn"
+              onClick={() => void copyOutput()}
+              title={t('common.copyToClipboard')}
+              aria-label={t('common.copyToClipboard')}
+            >
+              <Copy size={16} />
+            </button>
+          ) : null}
+        </div>
         <textarea
           value={outputValue}
           readOnly={outputReadOnly}
           placeholder={outputPlaceholder}
           spellCheck={false}
         />
-      </label>
+      </div>
     </div>
   );
 }

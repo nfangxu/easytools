@@ -1,8 +1,21 @@
+import { Copy, RefreshCw } from 'lucide-react';
 import { useRef, useState, type ReactElement } from 'react';
 
-import { ToolChrome } from '../../components/ToolChrome';
-import { copyTextToClipboard, isLatestStatusRequest, saveRecentRun } from '../toolActions';
-import { dateToTimestamp, timestampToDate, type DateToTimestampResult, type TimestampToDateResult } from './timestampUtils';
+import { ToolGauge, type ToolGaugeLed } from '../../components/ToolGauge';
+import { ToolPlate, ToolPlateSwitch } from '../../components/ToolPlate';
+import { useI18n } from '../../i18n/I18nProvider';
+import {
+  copyTextToClipboard,
+  isLatestStatusRequest,
+  saveRecentRun,
+  type ToolStatusCode,
+} from '../toolActions';
+import {
+  dateToTimestamp,
+  timestampToDate,
+  type DateToTimestampResult,
+  type TimestampToDateResult,
+} from './timestampUtils';
 
 interface TimestampToolProps {
   onRecentRunAdded: () => void;
@@ -10,15 +23,22 @@ interface TimestampToolProps {
 
 type SuccessfulTimestampToDate = Extract<TimestampToDateResult, { ok: true }>;
 type SuccessfulDateToTimestamp = Extract<DateToTimestampResult, { ok: true }>;
+type TimestampDirection = 'to-date' | 'to-timestamp';
 
-export function buildTimestampToDateState(converted: SuccessfulTimestampToDate): { dateText: string; result: string } {
+export function buildTimestampToDateState(converted: SuccessfulTimestampToDate): {
+  dateText: string;
+  result: string;
+} {
   return {
     dateText: converted.value,
     result: `${converted.value}\n${converted.milliseconds} ms`,
   };
 }
 
-export function buildDateToTimestampState(converted: SuccessfulDateToTimestamp): { timestamp: string; result: string } {
+export function buildDateToTimestampState(converted: SuccessfulDateToTimestamp): {
+  timestamp: string;
+  result: string;
+} {
   return {
     timestamp: String(converted.seconds),
     result: `${converted.seconds} s\n${converted.milliseconds} ms`,
@@ -26,11 +46,15 @@ export function buildDateToTimestampState(converted: SuccessfulDateToTimestamp):
 }
 
 export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactElement {
+  const { t } = useI18n();
   const [timestampInput, setTimestampInput] = useState('1704067200');
   const [dateInput, setDateInput] = useState('2024-01-01 00:00:00');
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
-  const [status, setStatus] = useState('');
+  const [statusKey, setStatusKey] = useState<ToolStatusCode>('');
+  const [direction, setDirection] = useState<TimestampDirection>('to-date');
+  const [pulseKey, setPulseKey] = useState(0);
+  const [ledState, setLedState] = useState<ToolGaugeLed>('idle');
   const statusRequestIdRef = useRef(0);
 
   function nextStatusRequestId(): number {
@@ -40,19 +64,22 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
     return requestId;
   }
 
-  function setLatestStatus(requestId: number, nextStatus: string): void {
+  function setLatestStatus(requestId: number, code: ToolStatusCode): void {
     if (isLatestStatusRequest(requestId, statusRequestIdRef.current)) {
-      setStatus(nextStatus);
+      setStatusKey(code);
     }
   }
 
   async function runTimestampToDate(): Promise<void> {
+    setDirection('to-date');
     const conversion = timestampToDate(timestampInput);
 
     if (!conversion.ok) {
       setError(conversion.error);
       nextStatusRequestId();
-      setStatus('');
+      setStatusKey('');
+      setLedState('error');
+      setPulseKey((value) => value + 1);
       return;
     }
 
@@ -61,11 +88,13 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
     setDateInput(nextState.dateText);
     setResult(nextState.result);
     setError('');
+    setLedState('ok');
+    setPulseKey((value) => value + 1);
     const recentRunStatus = await saveRecentRun(
       {
         toolId: 'timestamp',
         operation: 'timestamp-to-date',
-        summary: '时间戳转日期',
+        summary: t('tool.timestamp.summary.toDate'),
         preview: nextState.result.slice(0, 120),
       },
       window.easytools?.addRecentRun,
@@ -77,12 +106,15 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
   }
 
   async function runDateToTimestamp(): Promise<void> {
+    setDirection('to-timestamp');
     const conversion = dateToTimestamp(dateInput);
 
     if (!conversion.ok) {
       setError(conversion.error);
       nextStatusRequestId();
-      setStatus('');
+      setStatusKey('');
+      setLedState('error');
+      setPulseKey((value) => value + 1);
       return;
     }
 
@@ -91,11 +123,13 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
     setTimestampInput(nextState.timestamp);
     setResult(nextState.result);
     setError('');
+    setLedState('ok');
+    setPulseKey((value) => value + 1);
     const recentRunStatus = await saveRecentRun(
       {
         toolId: 'timestamp',
         operation: 'date-to-timestamp',
-        summary: '日期转时间戳',
+        summary: t('tool.timestamp.summary.toTimestamp'),
         preview: nextState.result.slice(0, 120),
       },
       window.easytools?.addRecentRun,
@@ -106,63 +140,128 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
     }
   }
 
+  function clear(): void {
+    setTimestampInput('');
+    setDateInput('');
+    setResult('');
+    setError('');
+    nextStatusRequestId();
+    setStatusKey('');
+    setLedState('idle');
+  }
+
   async function copyResult(): Promise<void> {
     const statusRequestId = nextStatusRequestId();
-    const copyStatus = await copyTextToClipboard(result, navigator.clipboard.writeText.bind(navigator.clipboard));
+    const copyStatus = await copyTextToClipboard(
+      result,
+      navigator.clipboard.writeText.bind(navigator.clipboard),
+    );
     setLatestStatus(statusRequestId, copyStatus);
   }
 
   return (
-    <ToolChrome title="时间戳转换" description="在 Unix 时间戳和本地日期时间之间转换。">
-      <div className="timestamp-grid">
-        <label className="field-block compact-field">
-          <span>时间戳</span>
-          <input
-            value={timestampInput}
-            onChange={(event) => {
-              setTimestampInput(event.target.value);
-            }}
-            placeholder="10 位秒或 13 位毫秒"
-          />
-        </label>
-        <label className="field-block compact-field">
-          <span>日期时间</span>
-          <input
-            value={dateInput}
-            onChange={(event) => {
-              setDateInput(event.target.value);
-            }}
-            placeholder="YYYY-MM-DD HH:mm:ss"
-          />
-        </label>
-      </div>
-      <div className="toolbar">
-        <button type="button" onClick={() => void runTimestampToDate()}>
-          转日期
-        </button>
-        <button type="button" onClick={() => void runDateToTimestamp()}>
-          转时间戳
-        </button>
-        <button type="button" className="secondary" onClick={() => void copyResult()} disabled={!result}>
-          复制结果
-        </button>
-      </div>
-      {error ? <div className="error-banner" role="alert">{error}</div> : null}
-      {status ? (
-        <div className="status-message" role="status" aria-live="polite">
-          {status}
+    <div className="tool-panel">
+      <ToolPlate
+        seriesNumber="01"
+        category="Date"
+        name="TIMESTAMP"
+        subtitle="CONVERTER"
+        description={t('tool.timestamp.description')}
+        operations={
+          <ToolPlateSwitch>
+            <button
+              type="button"
+              className={direction === 'to-date' ? 'active' : ''}
+              onClick={() => void runTimestampToDate()}
+            >
+              {t('tool.timestamp.action.toDate')}
+            </button>
+            <button
+              type="button"
+              className={direction === 'to-timestamp' ? 'active' : ''}
+              onClick={() => void runDateToTimestamp()}
+            >
+              {t('tool.timestamp.action.toTimestamp')}
+            </button>
+          </ToolPlateSwitch>
+        }
+      />
+      <div className="tool-body">
+        <div className="timestamp-grid">
+          <label className="field-block compact-field">
+            <span>{t('tool.timestamp.label.timestamp')}</span>
+            <input
+              value={timestampInput}
+              onChange={(event) => {
+                setTimestampInput(event.target.value);
+              }}
+              placeholder={t('tool.timestamp.placeholder.timestamp')}
+            />
+          </label>
+          <label className="field-block compact-field">
+            <span>{t('tool.timestamp.label.datetime')}</span>
+            <input
+              value={dateInput}
+              onChange={(event) => {
+                setDateInput(event.target.value);
+              }}
+              placeholder={t('tool.timestamp.placeholder.datetime')}
+            />
+          </label>
         </div>
-      ) : null}
-      <label className="field-block">
-        <span>结果</span>
-        <textarea
-          className="result-area"
-          value={result}
-          readOnly
-          placeholder="运行后显示转换结果"
-          spellCheck={false}
+        {error ? (
+          <div className="error-banner" role="alert">
+            {error}
+          </div>
+        ) : null}
+        {statusKey ? (
+          <div className="status-message" role="status" aria-live="polite">
+            {t(statusKey)}
+          </div>
+        ) : null}
+        <label className="field-block">
+          <span>{t('tool.timestamp.label.result')}</span>
+          <textarea
+            className="result-area"
+            value={result}
+            readOnly
+            placeholder={t('tool.timestamp.placeholder.result')}
+            spellCheck={false}
+          />
+        </label>
+        <ToolGauge
+          state={ledState}
+          stateLabel={direction === 'to-date' ? '→ DATE' : '→ TS'}
+          pulseKey={pulseKey}
+          segments={[
+            {
+              label: 'INPUT',
+              value: direction === 'to-date' ? timestampInput || '—' : dateInput || '—',
+            },
+            {
+              label: 'RESULT',
+              value: result ? result.split('\n')[0] : '—',
+            },
+          ]}
+          actions={
+            <>
+              <button type="button" onClick={clear}>
+                <RefreshCw size={12} />
+                {t('common.clear')}
+              </button>
+              <button
+                type="button"
+                className="active"
+                onClick={() => void copyResult()}
+                disabled={!result}
+              >
+                <Copy size={12} />
+                {t('common.copy')}
+              </button>
+            </>
+          }
         />
-      </label>
-    </ToolChrome>
+      </div>
+    </div>
   );
 }

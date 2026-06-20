@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import {
   BUILTIN_LLM_API_TEMPLATES,
+  LlmApiTemplateValidationError,
   buildTemplateValidationInputs,
   parseCustomTemplatesSetting,
   sanitizeTemplateDraft,
@@ -19,16 +20,35 @@ describe('llmApiTemplates', () => {
     expect(bailian?.endpoints.anthropic?.baseUrl).toBe('https://dashscope.aliyuncs.com/apps/anthropic');
   });
 
-  test('rejects custom templates without any protocol endpoint', () => {
-    expect(() =>
+  test('rejects custom templates without any protocol endpoint with a translation key', () => {
+    const draft = {
+      name: 'Empty vendor',
+      endpoints: {
+        openai: { baseUrl: '   ', model: '' },
+        anthropic: { baseUrl: '', model: '' },
+      },
+    };
+
+    expect(() => sanitizeTemplateDraft(draft)).toThrow(LlmApiTemplateValidationError);
+
+    try {
+      sanitizeTemplateDraft(draft);
+    } catch (error) {
+      expect(error).toBeInstanceOf(LlmApiTemplateValidationError);
+      expect((error as LlmApiTemplateValidationError).key).toBe('tool.llm.error.atLeastOneEndpoint');
+    }
+  });
+
+  test('rejects unnamed custom templates with a translation key', () => {
+    try {
       sanitizeTemplateDraft({
-        name: 'Empty vendor',
-        endpoints: {
-          openai: { baseUrl: '   ', model: '' },
-          anthropic: { baseUrl: '', model: '' },
-        },
-      }),
-    ).toThrow('至少填写一个协议地址。');
+        name: '   ',
+        endpoints: { openai: { baseUrl: 'https://gateway.example.com/v1' } },
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(LlmApiTemplateValidationError);
+      expect((error as LlmApiTemplateValidationError).key).toBe('tool.llm.error.templateNameRequired');
+    }
   });
 
   test('trims custom template fields and drops empty endpoints', () => {

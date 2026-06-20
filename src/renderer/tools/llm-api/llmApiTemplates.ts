@@ -3,6 +3,7 @@ import type {
   LlmApiValidationInput,
   SettingValue,
 } from '../../../shared/types';
+import type { TranslationKey } from '../../i18n/translations';
 
 export interface LlmApiTemplateEndpoint {
   baseUrl: string;
@@ -19,6 +20,17 @@ export interface LlmApiTemplate {
 export interface LlmApiTemplateDraft {
   name: string;
   endpoints: Partial<Record<LlmApiProtocol, Partial<LlmApiTemplateEndpoint>>>;
+}
+
+/**
+ * Thrown by `sanitizeTemplateDraft` when a draft fails validation. The `key`
+ * is a translation key the caller should run through `t()` for display.
+ */
+export class LlmApiTemplateValidationError extends Error {
+  constructor(public readonly key: TranslationKey) {
+    super(key);
+    this.name = 'LlmApiTemplateValidationError';
+  }
 }
 
 export const CUSTOM_TEMPLATES_SETTING_NAMESPACE = 'llm-api:custom-templates';
@@ -127,7 +139,7 @@ export function sanitizeTemplateDraft(draft: LlmApiTemplateDraft): LlmApiTemplat
   const name = draft.name.trim();
 
   if (!name) {
-    throw new Error('请输入模板名称。');
+    throw new LlmApiTemplateValidationError('tool.llm.error.templateNameRequired');
   }
 
   const endpoints: LlmApiTemplate['endpoints'] = {};
@@ -143,7 +155,7 @@ export function sanitizeTemplateDraft(draft: LlmApiTemplateDraft): LlmApiTemplat
   }
 
   if (!endpoints.openai && !endpoints.anthropic) {
-    throw new Error('至少填写一个协议地址。');
+    throw new LlmApiTemplateValidationError('tool.llm.error.atLeastOneEndpoint');
   }
 
   return {

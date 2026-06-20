@@ -26,26 +26,39 @@ describe('jwtUtils', () => {
   it('rejects tokens that do not contain three parts', () => {
     expect(parseJwt('one.two')).toEqual({
       ok: false,
-      error: 'JWT 必须包含 header、payload、signature 三段。',
+      message: { key: 'tool.jwt.error.malformed' },
     });
   });
 
-  it('reports expired and not-before timing states', () => {
-    expect(analyzeJwtTiming({ exp: 1000 }, 2000)).toContain('已过期：1970-01-01 08:16:40');
-    expect(analyzeJwtTiming({ nbf: 3000 }, 2000)).toContain('尚未生效：1970-01-01 08:50:00');
-    expect(analyzeJwtTiming({ iat: 1500 }, 2000)).toContain('签发时间：1970-01-01 08:25:00');
+  it('reports expired and not-before timing states as translation keys', () => {
+    expect(analyzeJwtTiming({ exp: 1000 }, 2000)).toContainEqual({
+      key: 'tool.jwt.timing.expired',
+      vars: { at: '1970-01-01 08:16:40' },
+    });
+    expect(analyzeJwtTiming({ nbf: 3000 }, 2000)).toContainEqual({
+      key: 'tool.jwt.timing.notYetValid',
+      vars: { at: '1970-01-01 08:50:00' },
+    });
+    expect(analyzeJwtTiming({ iat: 1500 }, 2000)).toContainEqual({
+      key: 'tool.jwt.timing.iat',
+      vars: { at: '1970-01-01 08:25:00' },
+    });
+  });
+
+  it('falls back to "no claims" when none of exp/nbf/iat are present', () => {
+    expect(analyzeJwtTiming({}, 2000)).toEqual([{ key: 'tool.jwt.timing.none' }]);
   });
 
   it('verifies HS256 signatures with a shared secret', async () => {
     await expect(verifyJwtHmacSignature(HS256_TOKEN, 'secret')).resolves.toEqual({
       supported: true,
       valid: true,
-      message: 'HS256 签名校验通过。',
+      message: { key: 'tool.jwt.signature.valid', vars: { alg: 'HS256' } },
     });
     await expect(verifyJwtHmacSignature(HS256_TOKEN, 'wrong')).resolves.toEqual({
       supported: true,
       valid: false,
-      message: 'HS256 签名校验失败。',
+      message: { key: 'tool.jwt.signature.invalid', vars: { alg: 'HS256' } },
     });
   });
 
@@ -58,7 +71,7 @@ describe('jwtUtils', () => {
     await expect(verifyJwtHmacSignature(token, 'secret')).resolves.toEqual({
       supported: false,
       valid: false,
-      message: '当前仅支持 HS256/HS384/HS512 密钥校验。',
+      message: { key: 'tool.jwt.signature.unsupported' },
     });
   });
 });

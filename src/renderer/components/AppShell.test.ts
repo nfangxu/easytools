@@ -2,24 +2,25 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getAppTitle,
-  getPageTransitionClassName,
   getRecentRunsLoadState,
-  getToolSwitcherOpenStateAfterToolSelected,
-  getRecentRunsOpenStateAfterOutsideClick,
   getToolPanelClassName,
   getToolPanelState,
   getVisitedToolIds,
   isLatestRecentRunsRequest,
   readRecentRuns,
   shouldShowRecentRuns,
-  shouldShowToolSwitcher,
+  toolNameKey,
   type AppRoute,
 } from './AppShell';
 
 describe('AppShell page state', () => {
   it('shows EasyTools on the home page and appends the tool name on tool pages', () => {
-    expect(getAppTitle({ page: 'home' }, 'JSON 格式化')).toBe('EasyTools');
-    expect(getAppTitle({ page: 'tool', toolId: 'json' }, 'JSON 格式化')).toBe('EasyTools / JSON 格式化');
+    expect(getAppTitle({ page: 'home' }, 'JSON Formatter')).toBe('EasyTools');
+    expect(getAppTitle({ page: 'tool', toolId: 'json' }, 'JSON Formatter')).toBe('EasyTools / JSON Formatter');
+  });
+
+  it('shows the bare EasyTools title on the settings page', () => {
+    expect(getAppTitle({ page: 'settings' }, 'JSON Formatter')).toBe('EasyTools');
   });
 
   it('keeps visited tool panels mounted while only the selected tool is visible', () => {
@@ -31,36 +32,29 @@ describe('AppShell page state', () => {
     expect(getToolPanelState('timestamp', route, ['json', 'base64'])).toEqual({ shouldMount: false, isActive: false });
   });
 
+  it('does not append non-tool routes to the visited list', () => {
+    expect(getVisitedToolIds(['json'], { page: 'home' })).toEqual(['json']);
+    expect(getVisitedToolIds(['json'], { page: 'settings' })).toEqual(['json']);
+  });
+
   it('only shows recent runs when a tool page has the recent runs panel open', () => {
     expect(shouldShowRecentRuns({ page: 'home' }, true)).toBe(false);
     expect(shouldShowRecentRuns({ page: 'tool', toolId: 'json' }, false)).toBe(false);
     expect(shouldShowRecentRuns({ page: 'tool', toolId: 'json' }, true)).toBe(true);
-  });
-
-  it('only shows the tool switcher popover while a tool page has it open', () => {
-    expect(shouldShowToolSwitcher({ page: 'home' }, true)).toBe(false);
-    expect(shouldShowToolSwitcher({ page: 'tool', toolId: 'json' }, false)).toBe(false);
-    expect(shouldShowToolSwitcher({ page: 'tool', toolId: 'json' }, true)).toBe(true);
-  });
-
-  it('closes the tool switcher after a tool is selected', () => {
-    expect(getToolSwitcherOpenStateAfterToolSelected()).toBe(false);
-  });
-
-  it('closes recent runs when an outside popover click occurs', () => {
-    expect(getRecentRunsOpenStateAfterOutsideClick({ page: 'home' }, true)).toBe(false);
-    expect(getRecentRunsOpenStateAfterOutsideClick({ page: 'tool', toolId: 'json' }, true)).toBe(false);
-    expect(getRecentRunsOpenStateAfterOutsideClick({ page: 'tool', toolId: 'json' }, false)).toBe(false);
-  });
-
-  it('adds page transition classes for mounted pages', () => {
-    expect(getPageTransitionClassName({ page: 'home' })).toBe('page-transition page-transition-home');
-    expect(getPageTransitionClassName({ page: 'tool', toolId: 'json' })).toBe('page-transition page-transition-tool');
+    expect(shouldShowRecentRuns({ page: 'settings' }, true)).toBe(false);
   });
 
   it('adds tool panel transition classes for visible and hidden panels', () => {
     expect(getToolPanelClassName(true)).toBe('tool-panel-slot tool-panel-slot-active');
     expect(getToolPanelClassName(false)).toBe('tool-panel-slot tool-panel-slot-inactive');
+  });
+
+  it('maps every tool id to a translation key for its display name', () => {
+    expect(toolNameKey('timestamp')).toBe('tool.timestamp.name');
+    expect(toolNameKey('base64')).toBe('tool.base64.name');
+    expect(toolNameKey('json')).toBe('tool.json.name');
+    expect(toolNameKey('jwt')).toBe('tool.jwt.name');
+    expect(toolNameKey('llm-api')).toBe('tool.llm.name');
   });
 });
 
@@ -71,13 +65,20 @@ describe('AppShell recent run loading', () => {
   });
 
   it('keeps stale failed recent-run responses from updating rail status', () => {
-    expect(getRecentRunsLoadState(1, 2, { ok: false })).toEqual({ shouldApply: false, status: '' });
+    expect(getRecentRunsLoadState(1, 2, { ok: false })).toEqual({ shouldApply: false, statusKey: '' });
   });
 
-  it('surfaces current recent-run load failures', () => {
+  it('surfaces current recent-run load failures as a translation key', () => {
     expect(getRecentRunsLoadState(2, 2, { ok: false })).toEqual({
       shouldApply: true,
-      status: '最近记录加载失败',
+      statusKey: 'recent.loadFailed',
+    });
+  });
+
+  it('clears the rail status when the latest load succeeds', () => {
+    expect(getRecentRunsLoadState(2, 2, { ok: true })).toEqual({
+      shouldApply: true,
+      statusKey: '',
     });
   });
 

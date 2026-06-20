@@ -8,13 +8,13 @@ describe('tool actions', () => {
       throw new Error('denied');
     });
 
-    expect(status).toBe('复制失败');
+    expect(status).toBe('status.copyFailed');
   });
 
   it('returns a copied status when clipboard write succeeds', async () => {
     const status = await copyTextToClipboard('output', async () => undefined);
 
-    expect(status).toBe('已复制');
+    expect(status).toBe('status.copied');
   });
 
   it('returns a recent-run failure status when persistence rejects', async () => {
@@ -22,7 +22,7 @@ describe('tool actions', () => {
       {
         toolId: 'json',
         operation: 'format',
-        summary: 'JSON 格式化',
+        summary: 'JSON format',
         preview: '{}',
       },
       async () => {
@@ -30,7 +30,7 @@ describe('tool actions', () => {
       },
     );
 
-    expect(status).toBe('最近记录保存失败');
+    expect(status).toBe('status.recentRunFailed');
   });
 
   it('identifies stale async status requests', () => {

@@ -1,8 +1,16 @@
+import { Copy, RefreshCw } from 'lucide-react';
 import { useRef, useState, type ReactElement } from 'react';
 
 import { TextAreaPair } from '../../components/TextAreaPair';
-import { ToolChrome } from '../../components/ToolChrome';
-import { copyTextToClipboard, isLatestStatusRequest, saveRecentRun } from '../toolActions';
+import { ToolGauge, type ToolGaugeLed } from '../../components/ToolGauge';
+import { ToolPlate, ToolPlateSwitch } from '../../components/ToolPlate';
+import { useI18n } from '../../i18n/I18nProvider';
+import {
+  copyTextToClipboard,
+  isLatestStatusRequest,
+  saveRecentRun,
+  type ToolStatusCode,
+} from '../toolActions';
 import { compactJson, formatJson } from './jsonUtils';
 
 interface JsonToolProps {
@@ -14,10 +22,14 @@ type JsonOperation = 'format' | 'compact';
 const SAMPLE_JSON = '{"name":"EasyTools","tools":["JSON","Base64","Timestamp"]}';
 
 export function JsonTool({ onRecentRunAdded }: JsonToolProps): ReactElement {
+  const { t } = useI18n();
   const [input, setInput] = useState(SAMPLE_JSON);
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
-  const [status, setStatus] = useState('');
+  const [statusKey, setStatusKey] = useState<ToolStatusCode>('');
+  const [activeOperation, setActiveOperation] = useState<JsonOperation>('format');
+  const [pulseKey, setPulseKey] = useState(0);
+  const [ledState, setLedState] = useState<ToolGaugeLed>('idle');
   const statusRequestIdRef = useRef(0);
 
   function nextStatusRequestId(): number {
@@ -27,30 +39,35 @@ export function JsonTool({ onRecentRunAdded }: JsonToolProps): ReactElement {
     return requestId;
   }
 
-  function setLatestStatus(requestId: number, nextStatus: string): void {
+  function setLatestStatus(requestId: number, code: ToolStatusCode): void {
     if (isLatestStatusRequest(requestId, statusRequestIdRef.current)) {
-      setStatus(nextStatus);
+      setStatusKey(code);
     }
   }
 
   async function run(operation: JsonOperation): Promise<void> {
+    setActiveOperation(operation);
     const result = operation === 'format' ? formatJson(input) : compactJson(input);
 
     if (!result.ok) {
       setError(result.error);
       nextStatusRequestId();
-      setStatus('');
+      setStatusKey('');
+      setLedState('error');
+      setPulseKey((value) => value + 1);
       return;
     }
 
     const statusRequestId = nextStatusRequestId();
     setOutput(result.value);
     setError('');
+    setLedState('ok');
+    setPulseKey((value) => value + 1);
     const recentRunStatus = await saveRecentRun(
       {
         toolId: 'json',
         operation,
-        summary: operation === 'format' ? 'JSON 格式化' : 'JSON 压缩',
+        summary: t(operation === 'format' ? 'tool.json.summary.format' : 'tool.json.summary.compact'),
         preview: result.value.slice(0, 120),
       },
       window.easytools?.addRecentRun,
@@ -66,46 +83,104 @@ export function JsonTool({ onRecentRunAdded }: JsonToolProps): ReactElement {
     setOutput('');
     setError('');
     nextStatusRequestId();
-    setStatus('');
+    setStatusKey('');
+    setLedState('idle');
   }
 
   async function copyOutput(): Promise<void> {
     const statusRequestId = nextStatusRequestId();
-    const copyStatus = await copyTextToClipboard(output, navigator.clipboard.writeText.bind(navigator.clipboard));
+    const copyStatus = await copyTextToClipboard(
+      output,
+      navigator.clipboard.writeText.bind(navigator.clipboard),
+    );
     setLatestStatus(statusRequestId, copyStatus);
   }
 
+  const inputChars = input.length;
+  const outputChars = output.length;
+  const meterMax = Math.max(inputChars, outputChars, 1);
+
   return (
-    <ToolChrome title="JSON 格式化" description="格式化或压缩 JSON 文本，错误输入会保留在编辑区。">
-      <div className="toolbar">
-        <button type="button" onClick={() => void run('format')}>
-          格式化
-        </button>
-        <button type="button" onClick={() => void run('compact')}>
-          压缩
-        </button>
-        <button type="button" className="secondary" onClick={clear}>
-          清空
-        </button>
-        <button type="button" className="secondary" onClick={() => void copyOutput()} disabled={!output}>
-          复制输出
-        </button>
-      </div>
-      {error ? <div className="error-banner" role="alert">{error}</div> : null}
-      {status ? (
-        <div className="status-message" role="status" aria-live="polite">
-          {status}
-        </div>
-      ) : null}
-      <TextAreaPair
-        inputLabel="输入"
-        outputLabel="输出"
-        inputValue={input}
-        outputValue={output}
-        onInputChange={setInput}
-        inputPlaceholder="粘贴 JSON 文本"
-        outputPlaceholder="运行后显示结果"
+    <div className="tool-panel">
+      <ToolPlate
+        seriesNumber="03"
+        category="Text"
+        name="JSON"
+        subtitle="FORMATTER"
+        description={t('tool.json.description')}
+        operations={
+          <ToolPlateSwitch>
+            <button
+              type="button"
+              className={activeOperation === 'format' ? 'active' : ''}
+              onClick={() => void run('format')}
+            >
+              {t('tool.json.action.format')}
+            </button>
+            <button
+              type="button"
+              className={activeOperation === 'compact' ? 'active' : ''}
+              onClick={() => void run('compact')}
+            >
+              {t('tool.json.action.compact')}
+            </button>
+          </ToolPlateSwitch>
+        }
       />
-    </ToolChrome>
+      <div className="tool-body">
+        {error ? (
+          <div className="error-banner" role="alert">
+            {error}
+          </div>
+        ) : null}
+        {statusKey ? (
+          <div className="status-message" role="status" aria-live="polite">
+            {t(statusKey)}
+          </div>
+        ) : null}
+        <TextAreaPair
+          inputLabel={t('common.input')}
+          outputLabel={t('common.output')}
+          inputValue={input}
+          outputValue={output}
+          onInputChange={setInput}
+          inputPlaceholder={t('tool.json.placeholder.input')}
+          outputPlaceholder={t('tool.json.placeholder.output')}
+        />
+        <ToolGauge
+          state={ledState}
+          stateLabel={activeOperation === 'format' ? 'FORMAT' : 'COMPACT'}
+          pulseKey={pulseKey}
+          segments={[
+            { label: 'IN', value: `${inputChars} ch`, meter: inputChars / meterMax },
+            { label: 'OUT', value: `${outputChars} ch`, meter: outputChars / meterMax },
+            {
+              label: 'Δ',
+              value:
+                inputChars && outputChars
+                  ? `${outputChars > inputChars ? '+' : ''}${outputChars - inputChars}`
+                  : '—',
+            },
+          ]}
+          actions={
+            <>
+              <button type="button" onClick={clear}>
+                <RefreshCw size={12} />
+                {t('common.clear')}
+              </button>
+              <button
+                type="button"
+                className="active"
+                onClick={() => void copyOutput()}
+                disabled={!output}
+              >
+                <Copy size={12} />
+                {t('common.copy')}
+              </button>
+            </>
+          }
+        />
+      </div>
+    </div>
   );
 }

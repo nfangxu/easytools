@@ -1,3 +1,5 @@
+import type { TranslationKey } from '../../i18n/translations';
+
 export interface ParsedJwt {
   header: Record<string, unknown>;
   payload: Record<string, unknown>;
@@ -7,12 +9,24 @@ export interface ParsedJwt {
   signature: string;
 }
 
-export type JwtParseResult = { ok: true; value: ParsedJwt } | { ok: false; error: string };
+/**
+ * A user-facing message represented as a translation key plus the values
+ * it interpolates. The renderer calls `t(message.key, message.vars)` to
+ * turn this into a localized string.
+ */
+export interface JwtMessage {
+  key: TranslationKey;
+  vars?: Record<string, string | number>;
+}
+
+export type JwtParseResult =
+  | { ok: true; value: ParsedJwt }
+  | { ok: false; message: JwtMessage };
 
 export interface JwtSignatureVerificationResult {
   supported: boolean;
   valid: boolean;
-  message: string;
+  message: JwtMessage;
 }
 
 const HMAC_ALGORITHMS: Record<string, { hash: string; label: string }> = {
@@ -21,12 +35,19 @@ const HMAC_ALGORITHMS: Record<string, { hash: string; label: string }> = {
   HS512: { hash: 'SHA-512', label: 'HS512' },
 };
 
+class JwtPartError extends Error {
+  constructor(public readonly partName: string) {
+    super(`${partName} must be a JSON object`);
+    this.name = 'JwtPartError';
+  }
+}
+
 export function parseJwt(token: string): JwtParseResult {
   const trimmed = token.trim();
   const parts = trimmed.split('.');
 
   if (parts.length !== 3 || parts.some((part) => part.length === 0)) {
-    return { ok: false, error: 'JWT 必须包含 header、payload、signature 三段。' };
+    return { ok: false, message: { key: 'tool.jwt.error.malformed' } };
   }
 
   try {
@@ -45,29 +66,47 @@ export function parseJwt(token: string): JwtParseResult {
       },
     };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : 'JWT 解析失败。' };
+    if (error instanceof JwtPartError) {
+      return {
+        ok: false,
+        message: { key: 'tool.jwt.error.invalidPart', vars: { part: error.partName } },
+      };
+    }
+    return { ok: false, message: { key: 'tool.jwt.error.parseFailed' } };
   }
 }
 
-export function analyzeJwtTiming(payload: Record<string, unknown>, nowSeconds = Date.now() / 1000): string[] {
-  const messages: string[] = [];
+export function analyzeJwtTiming(
+  payload: Record<string, unknown>,
+  nowSeconds = Date.now() / 1000,
+): JwtMessage[] {
+  const messages: JwtMessage[] = [];
   const exp = readNumericDate(payload.exp);
   const nbf = readNumericDate(payload.nbf);
   const iat = readNumericDate(payload.iat);
 
   if (exp !== null) {
-    messages.push(`${exp <= nowSeconds ? '已过期' : '未过期'}：${formatNumericDate(exp)}`);
+    messages.push({
+      key: exp <= nowSeconds ? 'tool.jwt.timing.expired' : 'tool.jwt.timing.notExpired',
+      vars: { at: formatNumericDate(exp) },
+    });
   }
 
   if (nbf !== null) {
-    messages.push(`${nbf > nowSeconds ? '尚未生效' : '已生效'}：${formatNumericDate(nbf)}`);
+    messages.push({
+      key: nbf > nowSeconds ? 'tool.jwt.timing.notYetValid' : 'tool.jwt.timing.alreadyValid',
+      vars: { at: formatNumericDate(nbf) },
+    });
   }
 
   if (iat !== null) {
-    messages.push(`签发时间：${formatNumericDate(iat)}`);
+    messages.push({
+      key: 'tool.jwt.timing.iat',
+      vars: { at: formatNumericDate(iat) },
+    });
   }
 
-  return messages.length > 0 ? messages : ['未包含 exp/nbf/iat 时间声明。'];
+  return messages.length > 0 ? messages : [{ key: 'tool.jwt.timing.none' }];
 }
 
 export async function verifyJwtHmacSignature(
@@ -77,7 +116,7 @@ export async function verifyJwtHmacSignature(
   const parsed = parseJwt(token);
 
   if (!parsed.ok) {
-    return { supported: false, valid: false, message: parsed.error };
+    return { supported: false, valid: false, message: parsed.message };
   }
 
   const algorithmName = typeof parsed.value.header.alg === 'string' ? parsed.value.header.alg : '';
@@ -87,7 +126,7 @@ export async function verifyJwtHmacSignature(
     return {
       supported: false,
       valid: false,
-      message: '当前仅支持 HS256/HS384/HS512 密钥校验。',
+      message: { key: 'tool.jwt.signature.unsupported' },
     };
   }
 
@@ -95,7 +134,7 @@ export async function verifyJwtHmacSignature(
     return {
       supported: true,
       valid: false,
-      message: '请输入密钥后再校验签名。',
+      message: { key: 'tool.jwt.signature.noSecret' },
     };
   }
 
@@ -116,7 +155,10 @@ export async function verifyJwtHmacSignature(
   return {
     supported: true,
     valid,
-    message: valid ? `${algorithm.label} 签名校验通过。` : `${algorithm.label} 签名校验失败。`,
+    message: {
+      key: valid ? 'tool.jwt.signature.valid' : 'tool.jwt.signature.invalid',
+      vars: { alg: algorithm.label },
+    },
   };
 }
 
@@ -125,7 +167,7 @@ function parseJwtJsonPart(value: string, partName: string): Record<string, unkno
   const parsed: unknown = JSON.parse(decoded);
 
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error(`${partName} 必须是 JSON 对象。`);
+    throw new JwtPartError(partName);
   }
 
   return parsed as Record<string, unknown>;
