@@ -76,4 +76,6 @@ git push origin v0.1.0
 
 The workflow builds Windows and macOS packages and uploads them to the GitHub Release for that tag.
 
+macOS ships as two separate DMGs — `*-arm64.dmg` for Apple Silicon and `*-x64.dmg` for Intel — built natively on `macos-latest` and `macos-13` runners respectively. Windows ships as `*-x64.exe` (NSIS installer) and `*-x64.zip` (portable). Pick the file that matches your CPU.
+
 Code signing and macOS notarization are not configured, so operating systems may show security warnings when installing release packages.

@@ -22,8 +22,13 @@ jobs:
             artifacts: |
               dist/*.exe
               dist/*.zip
-          - name: macOS
+          - name: macOS (Apple Silicon)
             os: macos-latest
+            dist-command: npm run dist:mac
+            artifacts: |
+              dist/*.dmg
+          - name: macOS (Intel)
+            os: macos-13
             dist-command: npm run dist:mac
             artifacts: |
               dist/*.dmg

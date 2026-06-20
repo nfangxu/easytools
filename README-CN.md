@@ -76,4 +76,6 @@ git push origin v0.1.0
 
 工作流会构建 Windows 和 macOS 安装包，并上传到该标签对应的 GitHub Release。
 
+macOS 会发布两个独立的 DMG —— `*-arm64.dmg` 给 Apple Silicon，`*-x64.dmg` 给 Intel——分别在 `macos-latest` 和 `macos-13` runner 上原生构建。Windows 发布 `*-x64.exe`（NSIS 安装包）和 `*-x64.zip`（便携包）。请按你的 CPU 选择对应文件下载。
+
 当前未配置代码签名和 macOS 公证，因此安装发布包时操作系统可能会显示安全提示。

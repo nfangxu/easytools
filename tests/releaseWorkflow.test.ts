@@ -24,6 +24,15 @@ describe('release workflow', () => {
     expect(workflow).toContain('npm run dist:mac');
   });
 
+  it('builds both Apple Silicon and Intel macOS installers on native runners', () => {
+    const workflow = readWorkflow();
+
+    // Apple Silicon — macos-latest currently resolves to macos-14/15 (ARM64).
+    expect(workflow).toContain('macos-latest');
+    // Intel — pinned because macos-latest no longer covers x64.
+    expect(workflow).toContain('macos-13');
+  });
+
   it('uploads built installers to the GitHub release', () => {
     const workflow = readWorkflow();
 

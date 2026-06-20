@@ -58,13 +58,15 @@
       "target": [
         "nsis",
         "zip"
-      ]
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "mac": {
       "icon": "build/icons/icon.icns",
       "target": [
         "dmg"
-      ]
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     }
   }
 }
