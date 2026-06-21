@@ -28,7 +28,7 @@ jobs:
             artifacts: |
               dist/*.dmg
           - name: macOS (Intel)
-            os: macos-13
+            os: macos-15-intel
             dist-command: npm run dist:mac
             artifacts: |
               dist/*.dmg

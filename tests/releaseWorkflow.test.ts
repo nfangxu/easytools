@@ -29,8 +29,10 @@ describe('release workflow', () => {
 
     // Apple Silicon — macos-latest currently resolves to macos-14/15 (ARM64).
     expect(workflow).toContain('macos-latest');
-    // Intel — pinned because macos-latest no longer covers x64.
-    expect(workflow).toContain('macos-13');
+    // Intel — the `macos-*-intel` family is the only x64 image GitHub
+    // currently offers; `macos-13` was retired in 2025 and the job sat
+    // stuck in "Waiting for a runner" forever.
+    expect(workflow).toContain('macos-15-intel');
   });
 
   it('uploads built installers to the GitHub release', () => {
