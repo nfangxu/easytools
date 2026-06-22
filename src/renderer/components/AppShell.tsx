@@ -11,7 +11,6 @@ import {
   Search,
   User,
   IdCard,
-  Cpu,
 } from 'lucide-react';
 
 import type { RecentRun } from '../../shared/types';
@@ -34,7 +33,6 @@ const TOOL_NAME_KEYS: Record<ToolId, TranslationKey> = {
   base64: 'tool.base64.name',
   json: 'tool.json.name',
   jwt: 'tool.jwt.name',
-  'llm-api': 'tool.llm.name',
   identity: 'tool.identity.name',
 };
 
@@ -50,7 +48,6 @@ function getToolIcon(toolId: string) {
     url: <ArrowRightLeft size={18} />,
     jwt: <Shield size={18} />,
     json: <FileText size={18} />,
-    'llm-api': <Cpu size={18} />,
     identity: <IdCard size={18} />,
   };
   return iconMap[toolId] || <Code size={18} />;

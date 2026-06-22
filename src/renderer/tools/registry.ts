@@ -4,7 +4,6 @@ import { Base64Tool } from './base64/Base64Tool';
 import { IdentityTool } from './identity/IdentityTool';
 import { JsonTool } from './json/JsonTool';
 import { JwtTool } from './jwt/JwtTool';
-import { LlmApiCheckerTool } from './llm-api/LlmApiCheckerTool';
 import { TimestampTool } from './timestamp/TimestampTool';
 
 export interface ToolComponentProps {
@@ -12,9 +11,9 @@ export interface ToolComponentProps {
 }
 
 export interface ToolDefinition {
-  id: 'json' | 'base64' | 'jwt' | 'timestamp' | 'llm-api' | 'identity';
+  id: 'json' | 'base64' | 'jwt' | 'timestamp' | 'identity';
   name: string;
-  category: 'Text' | 'Date' | 'AI' | 'Data';
+  category: 'Text' | 'Date' | 'Data';
   component: ComponentType<ToolComponentProps>;
 }
 
@@ -42,12 +41,6 @@ export const tools: ToolDefinition[] = [
     name: 'JWT Debugger',
     category: 'Text',
     component: JwtTool,
-  },
-  {
-    id: 'llm-api',
-    name: 'LLM API Checker',
-    category: 'AI',
-    component: LlmApiCheckerTool,
   },
   {
     id: 'identity',

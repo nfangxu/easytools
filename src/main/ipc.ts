@@ -1,12 +1,10 @@
 import { BrowserWindow, ipcMain } from 'electron';
 
 import type {
-  LlmApiValidationInput,
   RecentRunInput,
   SettingValue,
 } from '../shared/types';
 import type { createDatabase } from './database';
-import { validateLlmApiBatch } from './llmApiChecker';
 
 const MAX_SHORT_TEXT_LENGTH = 80;
 const MAX_SUMMARY_LENGTH = 240;
@@ -14,10 +12,6 @@ const MAX_PREVIEW_LENGTH = 500;
 const MAX_SETTING_JSON_LENGTH = 8 * 1024;
 const MAX_SETTING_DEPTH = 20;
 const MAX_SETTING_NODES = 1000;
-const MAX_LLM_BASE_URL_LENGTH = 300;
-const MAX_LLM_API_KEY_LENGTH = 500;
-const MAX_LLM_API_KEYS = 50;
-
 export type WindowControlAction = 'minimize' | 'toggleMaximize' | 'close';
 
 const windowControlChannels = {
@@ -57,10 +51,6 @@ export function registerIpc(database: ReturnType<typeof createDatabase>): void {
 
   ipcMain.handle('recent-runs:add', (_event, input: unknown) =>
     database.addRecentRun(validateRecentRunInput(input)),
-  );
-
-  ipcMain.handle('llm-api:validate', (_event, input: unknown) =>
-    validateLlmApiBatch(validateLlmApiValidationInput(input)),
   );
 
   for (const channel of Object.keys(windowControlChannels)) {
@@ -132,38 +122,6 @@ export function validateRecentRunInput(input: unknown): RecentRunInput {
   }
 
   return recentRun;
-}
-
-export function validateLlmApiValidationInput(input: unknown): LlmApiValidationInput {
-  if (!isRecord(input)) {
-    throw new Error('LLM API validation input must be an object.');
-  }
-
-  if (input.protocol !== 'openai' && input.protocol !== 'anthropic') {
-    throw new Error('protocol must be openai or anthropic.');
-  }
-
-  const baseUrl = validateTextField(input.baseUrl, 'baseUrl', MAX_LLM_BASE_URL_LENGTH);
-  const model = input.model === undefined
-    ? ''
-    : validateTextField(input.model, 'model', MAX_SHORT_TEXT_LENGTH, true);
-
-  if (!Array.isArray(input.apiKeys)) {
-    throw new Error('apiKeys must be an array.');
-  }
-
-  if (input.apiKeys.length === 0 || input.apiKeys.length > MAX_LLM_API_KEYS) {
-    throw new Error(`apiKeys must contain 1 to ${MAX_LLM_API_KEYS} items.`);
-  }
-
-  return {
-    protocol: input.protocol,
-    baseUrl,
-    model,
-    apiKeys: input.apiKeys.map((apiKey) =>
-      validateTextField(apiKey, 'apiKey', MAX_LLM_API_KEY_LENGTH),
-    ),
-  };
 }
 
 function validateTextField(

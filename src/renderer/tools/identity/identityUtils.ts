@@ -15,6 +15,8 @@ export interface IdentityRecord {
   };
   /** 18-digit GB 11643-1999 resident identity card number. */
   idNumber: string;
+  /** Plausible mainland China mobile number for test data. */
+  mobileNumber: string;
 }
 
 export interface IdentityFilters {
@@ -52,6 +54,37 @@ export const DEFAULT_BIRTH_FROM = new Date('1950-01-01T00:00:00Z');
 
 const ID_WEIGHTS = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2] as const;
 const ID_CHECKSUM_CHARS = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'] as const;
+const MOBILE_PREFIXES = [
+  '130',
+  '131',
+  '132',
+  '133',
+  '135',
+  '136',
+  '137',
+  '138',
+  '139',
+  '150',
+  '151',
+  '152',
+  '157',
+  '158',
+  '159',
+  '170',
+  '171',
+  '172',
+  '178',
+  '180',
+  '181',
+  '182',
+  '183',
+  '185',
+  '186',
+  '187',
+  '188',
+  '198',
+  '199',
+] as const;
 
 /**
  * Compute the mod-11 weighted checksum digit for the first 17 digits of a
@@ -104,6 +137,15 @@ function adjustSequenceForGender(rawSequence: number, gender: Gender): number {
     seq = wantOdd ? 1 : 2;
   }
   return seq;
+}
+
+export function buildMobileNumber(randomFn: () => number = Math.random): string {
+  const prefix = MOBILE_PREFIXES[Math.floor(randomFn() * MOBILE_PREFIXES.length)];
+  let suffix = '';
+  for (let index = 0; index < 8; index += 1) {
+    suffix += String(Math.floor(randomFn() * 10));
+  }
+  return `${prefix}${suffix}`;
 }
 
 /**
@@ -177,6 +219,7 @@ export function generateOne(filters: IdentityFilters, randomFn: () => number = M
   const sequence = Math.floor(randomFn() * 1000);
   const idNumber = buildIdNumber(county.id, birthDate, gender, sequence);
   const name = pickRandomName(randomFn);
+  const mobileNumber = buildMobileNumber(randomFn);
 
   return {
     name,
@@ -189,6 +232,7 @@ export function generateOne(filters: IdentityFilters, randomFn: () => number = M
       countyId: county.id,
     },
     idNumber,
+    mobileNumber,
   };
 }
 
@@ -223,8 +267,9 @@ export function formatRecordTsv(record: IdentityRecord): string {
     record.birthDate,
     `${record.region.provinceName}/${record.region.cityName}/${record.region.countyName}`,
     record.idNumber,
+    record.mobileNumber,
   ].join('\t');
 }
 
 /** Header row for the TSV export — matches `formatRecordTsv` columns. */
-export const RECORD_TSV_HEADER = ['name', 'gender', 'birth', 'region', 'id'].join('\t');
+export const RECORD_TSV_HEADER = ['name', 'gender', 'birth', 'region', 'id', 'mobile'].join('\t');

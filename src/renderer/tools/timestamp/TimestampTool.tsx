@@ -1,4 +1,4 @@
-import { Copy, RefreshCw } from 'lucide-react';
+import { Clock, Copy, RefreshCw } from 'lucide-react';
 import { useRef, useState, type ReactElement } from 'react';
 
 import { ToolGauge, type ToolGaugeLed } from '../../components/ToolGauge';
@@ -23,7 +23,7 @@ interface TimestampToolProps {
 
 type SuccessfulTimestampToDate = Extract<TimestampToDateResult, { ok: true }>;
 type SuccessfulDateToTimestamp = Extract<DateToTimestampResult, { ok: true }>;
-type TimestampDirection = 'to-date' | 'to-timestamp';
+type TimestampDirection = 'to-date' | 'to-timestamp' | 'current';
 
 export function buildTimestampToDateState(converted: SuccessfulTimestampToDate): {
   dateText: string;
@@ -42,6 +42,26 @@ export function buildDateToTimestampState(converted: SuccessfulDateToTimestamp):
   return {
     timestamp: String(converted.seconds),
     result: `${converted.seconds} s\n${converted.milliseconds} ms`,
+  };
+}
+
+export function buildCurrentTimeState(date: Date): {
+  timestamp: string;
+  dateText: string;
+  result: string;
+} {
+  const milliseconds = date.getTime();
+  const seconds = Math.floor(milliseconds / 1000);
+  const converted = timestampToDate(String(milliseconds));
+
+  if (!converted.ok) {
+    throw new Error(converted.error);
+  }
+
+  return {
+    timestamp: String(seconds),
+    dateText: converted.value,
+    result: converted.value + '\n' + seconds + ' s\n' + milliseconds + ' ms',
   };
 }
 
@@ -140,6 +160,31 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
     }
   }
 
+  async function showCurrentTime(): Promise<void> {
+    setDirection('current');
+    const statusRequestId = nextStatusRequestId();
+    const nextState = buildCurrentTimeState(new Date());
+    setTimestampInput(nextState.timestamp);
+    setDateInput(nextState.dateText);
+    setResult(nextState.result);
+    setError('');
+    setLedState('ok');
+    setPulseKey((value) => value + 1);
+    const recentRunStatus = await saveRecentRun(
+      {
+        toolId: 'timestamp',
+        operation: 'current-time',
+        summary: t('tool.timestamp.summary.current'),
+        preview: nextState.result.slice(0, 120),
+      },
+      window.easytools?.addRecentRun,
+    );
+    setLatestStatus(statusRequestId, recentRunStatus);
+    if (!recentRunStatus) {
+      onRecentRunAdded();
+    }
+  }
+
   function clear(): void {
     setTimestampInput('');
     setDateInput('');
@@ -182,6 +227,14 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
               onClick={() => void runDateToTimestamp()}
             >
               {t('tool.timestamp.action.toTimestamp')}
+            </button>
+            <button
+              type="button"
+              className={direction === 'current' ? 'active' : ''}
+              onClick={() => void showCurrentTime()}
+            >
+              <Clock size={12} />
+              {t('tool.timestamp.action.current')}
             </button>
           </ToolPlateSwitch>
         }
@@ -231,7 +284,7 @@ export function TimestampTool({ onRecentRunAdded }: TimestampToolProps): ReactEl
         </label>
         <ToolGauge
           state={ledState}
-          stateLabel={direction === 'to-date' ? '→ DATE' : '→ TS'}
+          stateLabel={direction === 'to-date' ? '→ DATE' : direction === 'to-timestamp' ? '→ TS' : 'NOW'}
           pulseKey={pulseKey}
           segments={[
             {

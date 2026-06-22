@@ -54,7 +54,6 @@ describe('AppShell page state', () => {
     expect(toolNameKey('base64')).toBe('tool.base64.name');
     expect(toolNameKey('json')).toBe('tool.json.name');
     expect(toolNameKey('jwt')).toBe('tool.jwt.name');
-    expect(toolNameKey('llm-api')).toBe('tool.llm.name');
     expect(toolNameKey('identity')).toBe('tool.identity.name');
   });
 });

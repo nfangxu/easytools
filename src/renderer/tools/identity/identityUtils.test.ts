@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildIdNumber,
+  buildMobileNumber,
   clampCount,
   computeIdChecksum,
   formatDate,
@@ -73,6 +74,13 @@ describe('buildIdNumber', () => {
   it('rejects malformed area codes', () => {
     expect(() => buildIdNumber('11010', sampleDate, 'male', 1)).toThrow();
     expect(() => buildIdNumber('abcdef', sampleDate, 'male', 1)).toThrow();
+  });
+});
+
+describe('buildMobileNumber', () => {
+  it('generates a plausible mainland China mobile number', () => {
+    expect(buildMobileNumber(scriptedRandom([0, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]))).toBe('13001234567');
+    expect(buildMobileNumber(() => 0.999)).toMatch(/^1[3-9]\d{9}$/);
   });
 });
 
@@ -155,6 +163,7 @@ describe('generateOne / generateMany', () => {
     expect(record.region.countyId).toBe('110105');
     expect(record.birthDate).toBe('2001-01-01');
     expect(ALL_NAMES).toContain(record.name);
+    expect(record.mobileNumber).toMatch(/^1[3-9]\d{9}$/);
     // Checksum holds.
     expect(computeIdChecksum(record.idNumber.slice(0, 17))).toBe(record.idNumber[17]);
   });
@@ -195,10 +204,11 @@ describe('formatRecordTsv', () => {
         countyId: '110105',
       },
       idNumber: '11010520010315001X',
+      mobileNumber: '13001234567',
     });
 
-    expect(row).toBe('王子涵\tmale\t2001-03-15\t北京市/北京市辖区/朝阳区\t11010520010315001X');
-    expect(RECORD_TSV_HEADER.split('\t')).toHaveLength(5);
+    expect(row).toBe('王子涵\tmale\t2001-03-15\t北京市/北京市辖区/朝阳区\t11010520010315001X\t13001234567');
+    expect(RECORD_TSV_HEADER.split('\t')).toHaveLength(6);
   });
 });
 

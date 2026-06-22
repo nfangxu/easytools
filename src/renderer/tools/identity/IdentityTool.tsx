@@ -199,7 +199,7 @@ export function IdentityTool({ onRecentRunAdded }: IdentityToolProps): ReactElem
     const summary = t('tool.identity.summary', { count: generated.length });
     const preview = generated
       .slice(0, 3)
-      .map((record) => `${record.name} · ${record.idNumber}`)
+      .map((record) => `${record.name} · ${record.idNumber} · ${record.mobileNumber}`)
       .join('\n');
 
     const requestId = nextStatusRequestId();
@@ -407,6 +407,7 @@ export function IdentityTool({ onRecentRunAdded }: IdentityToolProps): ReactElem
                     <th>{t('tool.identity.column.birth')}</th>
                     <th>{t('tool.identity.column.region')}</th>
                     <th>{t('tool.identity.column.id')}</th>
+                    <th>{t('tool.identity.column.mobile')}</th>
                     <th className="identity-col-action" aria-label={t('tool.identity.action.copyRow')} />
                   </tr>
                 </thead>
@@ -425,6 +426,7 @@ export function IdentityTool({ onRecentRunAdded }: IdentityToolProps): ReactElem
                       <td>{record.birthDate}</td>
                       <td>{`${record.region.provinceName} / ${record.region.countyName}`}</td>
                       <td className="identity-col-id">{record.idNumber}</td>
+                      <td>{record.mobileNumber}</td>
                       <td className="identity-col-action">
                         <button
                           type="button"
