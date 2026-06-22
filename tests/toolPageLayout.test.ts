@@ -6,16 +6,16 @@ function readStyles(): string {
   return readFileSync(join(process.cwd(), 'src/renderer/styles.css'), 'utf8');
 }
 
-describe('Workbench design tokens', () => {
-  it('declares the graphite + bone + signal palette on :root', () => {
+describe('Phosphor Instrument design tokens', () => {
+  it('declares the graphite + screen + signal-green palette on :root', () => {
     const styles = readStyles();
 
-    expect(styles).toMatch(/:root\s*{[^}]*--shell-base:\s*#1a1d21/s);
-    expect(styles).toMatch(/:root\s*{[^}]*--shell-rise:\s*#25282d/s);
-    expect(styles).toMatch(/:root\s*{[^}]*--shell-edge:\s*#3a3f46/s);
-    expect(styles).toMatch(/:root\s*{[^}]*--bone:\s*#ede7dd/s);
-    expect(styles).toMatch(/:root\s*{[^}]*--ink:\s*#15171a/s);
-    expect(styles).toMatch(/:root\s*{[^}]*--signal:\s*#ff5b1f/s);
+    expect(styles).toMatch(/:root\s*{[^}]*--shell-base:\s*#1a1e22/s);
+    expect(styles).toMatch(/:root\s*{[^}]*--shell-rise:\s*#22272d/s);
+    expect(styles).toMatch(/:root\s*{[^}]*--shell-edge:\s*#363d45/s);
+    expect(styles).toMatch(/:root\s*{[^}]*--screen:\s*#0d1012/s);
+    expect(styles).toMatch(/:root\s*{[^}]*--screen-ink:\s*#d6deda/s);
+    expect(styles).toMatch(/:root\s*{[^}]*--signal:\s*#00e676/s);
     expect(styles).toMatch(/body\s*{[^}]*background:\s*var\(--shell-base\)/s);
   });
 
@@ -37,7 +37,7 @@ describe('Workbench design tokens', () => {
   });
 });
 
-describe('Sidebar — graphite housing with signal-orange active rail', () => {
+describe('Sidebar — graphite housing with signal-green active rail', () => {
   it('uses fixed width and the rising graphite tone', () => {
     const styles = readStyles();
 
@@ -84,7 +84,7 @@ describe('Top nav — quiet stamp + search', () => {
   });
 });
 
-describe('Tool surface — plate header & bone wells', () => {
+describe('Tool surface — plate header & screen wells', () => {
   it('keeps the tool content scrollable with workbench padding', () => {
     const styles = readStyles();
 
@@ -102,27 +102,27 @@ describe('Tool surface — plate header & bone wells', () => {
     expect(styles).toMatch(/\.tool-plate-meta-no\s*{[^}]*color:\s*var\(--signal\)/s);
   });
 
-  it('paints active operation-switch chips in signal orange', () => {
+  it('paints active operation-switch chips in signal green', () => {
     const styles = readStyles();
 
     expect(styles).toMatch(/\.tool-plate-switch button\.active\s*{[^}]*background:\s*var\(--signal\)/s);
   });
 
-  it('lays out the textarea pair on a 2-column bone-well grid', () => {
+  it('lays out the textarea pair on a 2-column screen-well grid', () => {
     const styles = readStyles();
 
     expect(styles).toMatch(/\.textarea-pair\s*{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/s);
-    expect(styles).toMatch(/\.field-block\s*{[^}]*background:\s*var\(--bone\)/s);
+    expect(styles).toMatch(/\.field-block\s*{[^}]*background:\s*var\(--screen\)/s);
     expect(styles).toMatch(/\.field-header\s*{[^}]*background:\s*var\(--shell-rise\)/s);
     expect(styles).toMatch(/\.field-title\s*{[^}]*font-family:\s*var\(--font-mono\)/s);
     expect(styles).toMatch(/\.field-title\s*{[^}]*text-transform:\s*uppercase/s);
   });
 
-  it('paints textareas as bone paper with ink text', () => {
+  it('paints textareas as sunken screens with phosphor ink', () => {
     const styles = readStyles();
 
-    expect(styles).toMatch(/textarea[\s,a-z]*{[^}]*background:\s*var\(--bone\)/s);
-    expect(styles).toMatch(/textarea[\s,a-z]*{[^}]*color:\s*var\(--ink\)/s);
+    expect(styles).toMatch(/textarea[\s,a-z]*{[^}]*background:\s*var\(--screen\)/s);
+    expect(styles).toMatch(/textarea[\s,a-z]*{[^}]*color:\s*var\(--screen-ink\)/s);
   });
 });
 
@@ -135,7 +135,7 @@ describe('Tool Gauge — the signature instrument bar', () => {
     expect(styles).toMatch(/\.tool-gauge\s*{[^}]*font-family:\s*var\(--font-mono\)/s);
   });
 
-  it('lights the armed lamp and meter fill in signal orange', () => {
+  it('lights the armed lamp and meter fill in signal green', () => {
     const styles = readStyles();
 
     expect(styles).toMatch(/\.tool-gauge-led-armed\s*{[^}]*background:\s*var\(--signal\)/s);

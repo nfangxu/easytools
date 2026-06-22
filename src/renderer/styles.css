@@ -1,44 +1,49 @@
 /* =========================================================================
-   EasyTools · Workbench design system
+   EasyTools · Phosphor Instrument design system
    ─────────────────────────────────────────────────────────────────────────
-   Skin   = graphite tones (the workshop housing)
-   Bone   = warm paper (where the actual work happens — textareas)
-   Signal = ferric-orange (the one strong accent)
-   Type   = Big Shoulders Stencil Display (plate) / IBM Plex Sans (UI) /
-            IBM Plex Mono (code, numerics)
+   Shell    = graphite housing (the instrument case — matches the app icon's
+              charcoal squircle)
+   Screen   = sunken near-black work surface (phosphor terminal wells, darker
+              than the shell so they read as recessed)
+   Signal   = electric phosphor green (#00e676, the icon's one luminous accent).
+              Applied as light, not paint — LEDs, caret, focus rings, active
+              states — and disciplined: it glows only where something is "live".
+   Status   = red LED for errors; success reuses the signal green.
+   Type     = Big Shoulders Stencil Display (plate) / IBM Plex Sans (UI) /
+              IBM Plex Mono (code, numerics)
    ========================================================================= */
 
 :root {
-  /* Skin */
-  --shell-base: #1a1d21;
-  --shell-low: #14171a;
-  --shell-rise: #25282d;
-  --shell-high: #2f3338;
-  --shell-edge: #3a3f46;
-  --shell-edge-soft: #2c3036;
+  /* Shell — graphite housing */
+  --shell-low: #121519;
+  --shell-base: #1a1e22;
+  --shell-rise: #22272d;
+  --shell-high: #2c3239;
+  --shell-edge: #363d45;
+  --shell-edge-soft: #2a3036;
 
-  /* Content (bone paper) */
-  --bone: #ede7dd;
-  --bone-rule: #c9c2b6;
-  --bone-shade: #e3dccf;
-  --ink: #15171a;
-  --ink-muted: #555a60;
-  --ink-faint: #8a8f96;
+  /* Screen — sunken phosphor work surface (darker than the shell) */
+  --screen: #0d1012;
+  --screen-rule: #1b2126;
+  --screen-ink: #d6deda;
+  --screen-ink-mute: #8b958f;
+  --screen-ink-faint: #5b6360;
 
-  /* On-shell */
-  --on-shell: #e8e2d5;
-  --on-shell-mute: #9a9588;
-  --on-shell-dim: #6e6a60;
+  /* On-shell — UI text on the graphite housing */
+  --on-shell: #e3eae6;
+  --on-shell-mute: #98a39d;
+  --on-shell-dim: #5f6864;
 
-  /* Signals */
-  --signal: #ff5b1f;
-  --signal-deep: #d34516;
-  --signal-soft: rgba(255 91 31 / 18%);
-  --signal-line: rgba(255 91 31 / 36%);
-  --moss: #6b8e5a;
-  --moss-soft: rgba(107 142 90 / 16%);
-  --alarm: #d4513a;
-  --alarm-soft: rgba(212 81 58 / 16%);
+  /* Signal — electric phosphor green (the app icon) */
+  --signal: #00e676;
+  --signal-deep: #00c262;
+  --signal-soft: rgba(0 230 118 / 16%);
+  --signal-line: rgba(0 230 118 / 45%);
+  --signal-glow: rgba(0 230 118 / 50%);
+
+  /* Status — red LED for errors (success reuses --signal) */
+  --alarm: #ff5a57;
+  --alarm-soft: rgba(255 90 87 / 16%);
 
   /* Layout */
   --sidebar-width: 224px;
@@ -137,6 +142,8 @@ button.active {
   background: var(--signal);
   border-color: var(--signal);
   color: var(--shell-low);
+  /* an "armed" action emits light — carries to switch / gauge / toolbar too */
+  box-shadow: 0 0 14px -4px var(--signal-glow);
 }
 
 button.active:hover:not(:disabled) {
@@ -308,6 +315,8 @@ button.active:hover:not(:disabled) {
   background: var(--signal);
   color: var(--shell-low);
   border-radius: 2px;
+  /* the brand chip glows, echoing the icon's luminous glyph */
+  box-shadow: 0 0 12px -3px var(--signal-glow);
 }
 
 .sidebar-logo-text {
@@ -546,6 +555,7 @@ button.active:hover:not(:disabled) {
 
 .search-box:focus-within {
   border-color: var(--signal);
+  box-shadow: 0 0 0 1px var(--signal), 0 0 14px -4px var(--signal-glow);
 }
 
 .search-icon {
@@ -825,7 +835,7 @@ button.active:hover:not(:disabled) {
   background: var(--signal);
   box-shadow:
     inset 0 0 0 1px rgba(0 0 0 / 30%),
-    0 0 8px var(--signal-line);
+    0 0 10px var(--signal-glow);
 }
 
 .tool-gauge-led-error {
@@ -833,7 +843,8 @@ button.active:hover:not(:disabled) {
 }
 
 .tool-gauge-led-ok {
-  background: var(--moss);
+  /* settled/done: a steadier, deeper green than the armed LED */
+  background: var(--signal-deep);
 }
 
 .tool-gauge-state-label {
@@ -1155,8 +1166,8 @@ button.active:hover:not(:disabled) {
 .identity-config-panel input[type='number'] {
   height: 36px;
   padding: 0 12px;
-  background: var(--bone);
-  color: var(--ink);
+  background: var(--screen);
+  color: var(--screen-ink);
   border: 1px solid var(--shell-edge);
   border-radius: 2px;
   font-family: var(--font-mono);
@@ -1172,6 +1183,7 @@ button.active:hover:not(:disabled) {
 .identity-config-panel select:focus,
 .identity-config-panel input:focus {
   border-color: var(--signal);
+  box-shadow: 0 0 0 1px var(--signal), 0 0 14px -4px var(--signal-glow);
 }
 
 .identity-date-field {
@@ -1334,8 +1346,17 @@ button.active:hover:not(:disabled) {
   gap: 0;
   border: 1px solid var(--shell-edge);
   border-radius: 2px;
-  background: var(--bone);
+  background: var(--screen);
   overflow: hidden;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+/* the well lights up green while you're working in it */
+.field-block:focus-within {
+  border-color: var(--signal);
+  box-shadow: 0 0 0 1px var(--signal), 0 0 16px -4px var(--signal-glow);
 }
 
 .field-header {
@@ -1392,10 +1413,11 @@ select {
   width: 100%;
   border: none;
   border-radius: 0;
-  background: var(--bone);
-  color: var(--ink);
+  background: var(--screen);
+  color: var(--screen-ink);
   outline: none;
-  box-shadow: none;
+  /* sunken-screen depth: the work surface reads as recessed into the housing */
+  box-shadow: inset 0 1px 2px rgba(0 0 0 / 40%);
   font-family: var(--font-mono);
   transition: background 120ms ease;
 }
@@ -1411,13 +1433,13 @@ textarea {
 
 textarea::placeholder,
 input::placeholder {
-  color: var(--ink-faint);
+  color: var(--screen-ink-faint);
 }
 
 textarea::selection,
 input::selection {
   background: var(--signal-soft);
-  color: var(--ink);
+  color: var(--screen-ink);
 }
 
 input,
@@ -1425,13 +1447,13 @@ select {
   height: 36px;
   padding: 0 12px;
   font-size: 12.5px;
-  border-top: 1px solid var(--bone-rule);
+  border-top: 1px solid var(--screen-rule);
 }
 
 select {
   appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--ink-muted) 50%),
-    linear-gradient(135deg, var(--ink-muted) 50%, transparent 50%);
+  background-image: linear-gradient(45deg, transparent 50%, var(--screen-ink-mute) 50%),
+    linear-gradient(135deg, var(--screen-ink-mute) 50%, transparent 50%);
   background-position:
     calc(100% - 14px) 50%,
     calc(100% - 9px) 50%;
@@ -1488,10 +1510,10 @@ label.field-block > span:not(.field-title):not(.field-meta) {
 }
 
 .status-message {
-  border: 1px solid var(--moss);
+  border: 1px solid var(--signal);
   border-left-width: 3px;
   border-radius: 2px;
-  background: var(--moss-soft);
+  background: var(--signal-soft);
   color: var(--on-shell);
   padding: 8px 14px;
   font-family: var(--font-mono);
@@ -1569,141 +1591,12 @@ label.field-block > span:not(.field-title):not(.field-meta) {
   min-height: 140px;
 }
 
-/* -------- LLM API Checker ---------------------------------------------- */
-
-.llm-config-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px 18px;
-  background: var(--shell-rise);
-  border: 1px solid var(--shell-edge);
-  border-radius: 2px;
-}
-
-.llm-template-row {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 18px;
-  align-items: stretch;
-}
-
-.llm-template-summary {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.llm-template-endpoint {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px;
-  background: var(--shell-base);
-  border: 1px solid var(--shell-edge-soft);
-  border-radius: 2px;
-}
-
-.llm-template-endpoint strong {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--signal);
-}
-
-.llm-template-endpoint span {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--on-shell);
-  word-break: break-all;
-}
-
-.llm-template-endpoint small {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--on-shell-dim);
-}
-
-.llm-template-endpoint-muted strong {
-  color: var(--on-shell-dim);
-}
-
-.llm-key-field textarea {
-  min-height: 140px;
-}
-
-.llm-action-bar {
-  margin-top: 2px;
-}
-
-.llm-template-editor-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px 18px;
-  background: var(--shell-rise);
-  border: 1px solid var(--shell-edge);
-  border-left: 3px solid var(--signal);
-  border-radius: 2px;
-}
-
-.llm-template-editor {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.llm-template-editor-name {
-  grid-column: span 2;
-}
-
-.llm-template-editor-actions {
-  margin-top: 0;
-}
+/* -------- Result tables (shared by the Identity tool) ------------------ */
 
 .llm-result-section {
   border: 1px solid var(--shell-edge);
   border-radius: 2px;
   background: var(--shell-rise);
-}
-
-.llm-result-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 18px;
-  border-bottom: 1px solid var(--shell-edge);
-  background: var(--shell-base);
-}
-
-.llm-result-heading h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--on-shell);
-}
-
-.llm-result-heading p {
-  margin: 2px 0 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--on-shell-dim);
-  word-break: break-all;
-}
-
-.llm-result-heading > span {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--signal);
 }
 
 .llm-results {
@@ -1740,36 +1633,6 @@ label.field-block > span:not(.field-title):not(.field-meta) {
   border-bottom: none;
 }
 
-.llm-status {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 2px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.llm-status-available {
-  background: var(--moss-soft);
-  color: var(--moss);
-  border: 1px solid var(--moss);
-}
-
-.llm-status-partial {
-  background: var(--signal-soft);
-  color: var(--signal);
-  border: 1px solid var(--signal);
-}
-
-.llm-status-unavailable {
-  background: var(--alarm-soft);
-  color: var(--alarm);
-  border: 1px solid var(--alarm);
-}
-
 /* -------- Recent runs popover ------------------------------------------ */
 
 .recent-popover-backdrop {
@@ -1778,7 +1641,7 @@ label.field-block > span:not(.field-title):not(.field-meta) {
   z-index: 15;
   min-height: 0;
   border-radius: 0;
-  background: rgb(0 0 0 / 28%);
+  background: rgb(0 0 0 / 45%);
   padding: 0;
   border: none;
   color: inherit;
@@ -1787,7 +1650,7 @@ label.field-block > span:not(.field-title):not(.field-meta) {
 }
 
 .recent-popover-backdrop:hover:not(:disabled) {
-  background: rgb(0 0 0 / 28%);
+  background: rgb(0 0 0 / 45%);
 }
 
 .recent-popover {
@@ -1921,14 +1784,8 @@ label.field-block > span:not(.field-title):not(.field-meta) {
 @media (max-width: 1080px) {
   .textarea-pair,
   .jwt-output-grid,
-  .timestamp-grid,
-  .llm-template-row,
-  .llm-template-editor {
+  .timestamp-grid {
     grid-template-columns: 1fr;
-  }
-
-  .llm-template-editor-name {
-    grid-column: auto;
   }
 
   textarea {
