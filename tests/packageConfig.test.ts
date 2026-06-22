@@ -53,30 +53,28 @@ describe('package build config', () => {
 
     expect(build?.appId).toBe('com.easytools.app');
     expect(build?.productName).toBe('EasyTools');
-    expect(build?.icon).toBe('build/icons/icon.png');
+    expect(build?.icon).toBe('assets/icons/pngs/easytools-1024.png');
     expect(build?.directories?.output).toBe('dist');
     expect(build?.files).toEqual(['out/**', 'package.json']);
     expect(build?.extraMetadata?.main).toBe('out/main/index.js');
     expect(build?.npmRebuild).toBe(false);
     expect(build?.win?.target).toEqual(['nsis', 'zip']);
-    expect(build?.win?.icon).toBe('build/icons/icon.ico');
+    expect(build?.win?.icon).toBe('assets/icons/pngs/easytools-1024.png');
     expect(build?.mac?.target).toEqual(['dmg']);
-    expect(build?.mac?.icon).toBe('build/icons/icon.icns');
+    expect(build?.mac?.icon).toBe('assets/icons/pngs/easytools-1024.png');
   });
 
-  it('keeps generated app icon resources available for packaged builds', () => {
-    for (const iconFile of ['icon.png', 'icon.ico', 'icon.icns', 'favicon.png', 'apple-touch-icon.png']) {
-      expect(existsSync(join(process.cwd(), 'build/icons', iconFile))).toBe(true);
+  it('keeps the canonical icon source set under assets/icons/pngs', () => {
+    const sizes = ['16', '32', '64', '128', '180', '256', '512', '1024'];
+    for (const size of sizes) {
+      expect(existsSync(join(process.cwd(), 'assets/icons/pngs', `easytools-${size}.png`))).toBe(true);
     }
-
-    expect(existsSync(join(process.cwd(), 'public/favicon.png'))).toBe(true);
-    expect(existsSync(join(process.cwd(), 'public/apple-touch-icon.png'))).toBe(true);
   });
 
-  it('links generated favicon resources from the renderer HTML entry', () => {
+  it('links the favicon and apple-touch-icon to the canonical icon PNGs', () => {
     const indexHtml = readIndexHtml();
 
-    expect(indexHtml).toContain('<link rel="icon" type="image/png" href="/favicon.png" />');
-    expect(indexHtml).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />');
+    expect(indexHtml).toContain('<link rel="icon" type="image/png" href="./assets/icons/pngs/easytools-256.png" />');
+    expect(indexHtml).toContain('<link rel="apple-touch-icon" href="./assets/icons/pngs/easytools-512.png" />');
   });
 });

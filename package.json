@@ -11,7 +11,6 @@
     "dist": "npm run build && electron-builder --publish never",
     "dist:win": "npm run build && electron-builder --win --publish never",
     "dist:mac": "npm run build && electron-builder --mac --publish never",
-    "generate:icons": "node scripts/generate-icons.mjs",
     "rebuild:sqlite:electron": "node scripts/rebuild-sqlite.mjs electron",
     "rebuild:sqlite:node": "node scripts/rebuild-sqlite.mjs node",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
@@ -42,7 +41,7 @@
   "build": {
     "appId": "com.easytools.app",
     "productName": "EasyTools",
-    "icon": "build/icons/icon.png",
+    "icon": "assets/icons/pngs/easytools-1024.png",
     "directories": {
       "output": "dist"
     },
@@ -55,7 +54,7 @@
     },
     "npmRebuild": false,
     "win": {
-      "icon": "build/icons/icon.ico",
+      "icon": "assets/icons/pngs/easytools-1024.png",
       "target": [
         "nsis",
         "zip"
@@ -63,7 +62,7 @@
       "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "mac": {
-      "icon": "build/icons/icon.icns",
+      "icon": "assets/icons/pngs/easytools-1024.png",
       "target": [
         "dmg"
       ],

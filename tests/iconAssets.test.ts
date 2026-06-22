@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { inflateSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
@@ -88,21 +87,23 @@ function readPngRgba(path: string): { width: number; height: number; pixel: (x: 
   };
 }
 
-describe('generated app icon assets', () => {
-  it('uses the supplied 1024px PNG as the packaged master icon', () => {
-    expect(fileSha256(join(process.cwd(), 'build/icons/icon.png'))).toBe(
-      fileSha256(join(process.cwd(), 'assets/icon/easytools-1024.png')),
-    );
-  });
+const sourceDir = join(process.cwd(), 'assets/icons/pngs');
 
-  it('keeps the packaged master PNG at 1024px', () => {
-    const icon = readPngRgba(join(process.cwd(), 'build/icons/icon.png'));
+describe('icon source assets', () => {
+  it('ships a 1024px RGBA8 master PNG for electron-builder', () => {
+    const icon = readPngRgba(join(sourceDir, 'easytools-1024.png'));
 
     expect(icon.width).toBe(1024);
     expect(icon.height).toBe(1024);
   });
-});
 
-function fileSha256(path: string): string {
-  return createHash('sha256').update(readFileSync(path)).digest('hex');
-}
+  it('keeps the renderer-referenced PNGs at their advertised sizes', () => {
+    const favicon = readPngRgba(join(sourceDir, 'easytools-256.png'));
+    expect(favicon.width).toBe(256);
+    expect(favicon.height).toBe(256);
+
+    const appleTouch = readPngRgba(join(sourceDir, 'easytools-512.png'));
+    expect(appleTouch.width).toBe(512);
+    expect(appleTouch.height).toBe(512);
+  });
+});
