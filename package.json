@@ -15,7 +15,8 @@
     "rebuild:sqlite:electron": "node scripts/rebuild-sqlite.mjs electron",
     "rebuild:sqlite:node": "node scripts/rebuild-sqlite.mjs node",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
-    "test": "npm run rebuild:sqlite:node && vitest run",
+    "check:translations": "node scripts/check-translations.mjs",
+    "test": "npm run rebuild:sqlite:node && npm run check:translations && vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
