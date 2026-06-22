@@ -1,5 +1,5 @@
 import { Copy, RefreshCw, Sparkles } from 'lucide-react';
-import { useMemo, useRef, useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 
 import { ToolGauge, type ToolGaugeLed } from '../../components/ToolGauge';
 import { ToolPlate } from '../../components/ToolPlate';
@@ -10,6 +10,12 @@ import {
   saveRecentRun,
   type ToolStatusCode,
 } from '../toolActions';
+import {
+  DEFAULT_IDENTITY_PREFS,
+  loadIdentityPrefs,
+  saveIdentityPrefs,
+  type IdentityPrefs,
+} from './identityPrefs';
 import {
   MAX_COUNT,
   MIN_COUNT,
@@ -48,6 +54,68 @@ export function IdentityTool({ onRecentRunAdded }: IdentityToolProps): ReactElem
   const [birthTo, setBirthTo] = useState('');
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('random');
   const [countInput, setCountInput] = useState(DEFAULT_COUNT);
+  const [prefsHydrated, setPrefsHydrated] = useState(false);
+
+  // Hydrate persisted preferences on mount. The list of counties is
+  // filtered by the loaded province/city ids, so a stale countyId from a
+  // previous run gets dropped if its parent no longer exists.
+  useEffect(() => {
+    let cancelled = false;
+    void loadIdentityPrefs(
+      window.easytools?.getSetting as ((namespace: string) => Promise<unknown>) | undefined,
+    ).then((prefs) => {
+      if (cancelled) {
+        return;
+      }
+      setProvinceId(prefs.provinceId);
+      setCityId(prefs.cityId);
+      setCountyId(prefs.countyId);
+      setBirthFrom(prefs.birthFrom);
+      setBirthTo(prefs.birthTo);
+      setGenderFilter(prefs.gender);
+      setCountInput(prefs.count);
+      setPrefsHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Debounced write-back: snapshot the current filter shape and persist
+  // it after a brief pause so each keystroke in the count input doesn't
+  // hit the DB.
+  useEffect(() => {
+    if (!prefsHydrated) {
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      const prefs: IdentityPrefs = {
+        provinceId,
+        cityId,
+        countyId,
+        birthFrom,
+        birthTo,
+        gender: genderFilter,
+        count: countInput,
+      };
+      void saveIdentityPrefs(
+        window.easytools?.setSetting as
+          | ((namespace: string, value: unknown) => Promise<void>)
+          | undefined,
+        prefs,
+      );
+    }, 250);
+    return () => window.clearTimeout(handle);
+  }, [
+    prefsHydrated,
+    provinceId,
+    cityId,
+    countyId,
+    birthFrom,
+    birthTo,
+    genderFilter,
+    countInput,
+  ]);
 
   // Output state ----------------------------------------------------------
   const [records, setRecords] = useState<IdentityRecord[]>([]);

@@ -20,6 +20,7 @@ import type { TranslationKey } from '../i18n/translations';
 import { tools, type ToolDefinition } from '../tools/registry';
 import { SettingsPage } from './SettingsPage';
 import { TitleBar } from './TitleBar';
+import { ToolErrorBoundary } from './ToolErrorBoundary';
 
 type ToolId = ToolDefinition['id'];
 
@@ -192,6 +193,12 @@ export function AppShell(): ReactElement {
   const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
   const [recentRunsStatusKey, setRecentRunsStatusKey] = useState<'' | TranslationKey>('');
   const [isRecentRunsOpen, setIsRecentRunsOpen] = useState(false);
+  /**
+   * Per-tool reset counter for the error boundary. Bumping the counter
+   * forces React to remount the wrapped component tree (and therefore
+   * clear any state that put the tool in a bad place in the first place).
+   */
+  const [toolResetCount, setToolResetCount] = useState<Record<ToolId, number>>({} as Record<ToolId, number>);
   const recentRunsRequestIdRef = useRef(0);
   const selectedTool =
     route.page === 'tool' ? tools.find((tool) => tool.id === route.toolId) ?? tools[0] : tools[0];
@@ -326,6 +333,7 @@ export function AppShell(): ReactElement {
                 }
 
                 const ToolComponent = tool.component;
+                const resetKey = toolResetCount[tool.id] ?? 0;
 
                 return (
                   <div
@@ -333,7 +341,18 @@ export function AppShell(): ReactElement {
                     className={getToolPanelClassName(panelState.isActive)}
                     hidden={!panelState.isActive}
                   >
-                    <ToolComponent onRecentRunAdded={() => void loadRecentRuns(tool.id)} />
+                    <ToolErrorBoundary
+                      key={`${tool.id}-${resetKey}`}
+                      toolName={t(toolNameKey(tool.id))}
+                      onReset={() => {
+                        setToolResetCount((current) => ({
+                          ...current,
+                          [tool.id]: (current[tool.id] ?? 0) + 1,
+                        }));
+                      }}
+                    >
+                      <ToolComponent onRecentRunAdded={() => void loadRecentRuns(tool.id)} />
+                    </ToolErrorBoundary>
                   </div>
                 );
               })
